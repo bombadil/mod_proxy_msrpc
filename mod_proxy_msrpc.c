@@ -962,16 +962,6 @@ static int proxy_msrpc_read_server_response(request_rec *r, proxy_conn_rec *back
             return HTTP_INTERNAL_SERVER_ERROR;
         }
     }
-    header_value = apr_table_get(r->headers_out, "Transfer-Encoding");
-    if (header_value) {
-        /* This module doesn't support Transfer-Encodings for following reasons:
-         * (1) it is not needed for Outlook Anywhere support, and
-         * (2) this allows us to rely on the Content-Length header in the code below. */
-        ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r,
-                      "%s: The Transfer-Encoding '%s' is unsupported by the MSRPC module, aborting request",
-                      r->method, header_value);
-        return HTTP_INTERNAL_SERVER_ERROR;
-    }
 
     if (backend_status_code != HTTP_OK) {
         ap_log_rerror(APLOG_MARK, APLOG_DEBUG, 0, r,
@@ -1373,17 +1363,28 @@ static int proxy_msrpc_handler(request_rec *r, proxy_worker *worker,
 
         if (r->method_number == msrpc_methods[MSRPC_M_DATA_OUT]) {
             /* Wait for "HTTP/1.1 200 OK" message from server */
+            // TODO: proxy_msrpc_read_server_response() should NOT send data to the client so we can
+            //       return propper HTTP errors when backend server was ok and 'we' failed. See below
+            //       for a use case.
             status = proxy_msrpc_read_server_response(r, backend, rdata->server_bb);
             ap_log_rerror(APLOG_MARK, APLOG_TRACE2, 0, r,
                           "%s: proxy_msrpc_read_server_response() returned status code %d",
                           r->method, status);
             if (status != HTTP_OK) {
-                ap_log_rerror(APLOG_MARK, APLOG_INFO, 0, r,
+                ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r,
                               "%s: proxy_msrpc_read_server_response() returned unexpected status code %d from %pI (%s)",
                               r->method, status, worker->cp->addr, worker->s->hostname);
 
                 /* mark tunnel mode as failed */
                 proxy_msrpc_validate_outlook_session(r, rdata, SESSION_BROKEN);
+                int sync_rv = msrpc_sync_ready(sync_key, SESSION_BROKEN);
+                if (sync_rv != 0) {
+                    ap_log_rerror(APLOG_MARK, APLOG_ERR, APR_FROM_OS_ERROR(errno), r,
+                                  "%s: Failed to sync broken Outlook Session %s: %d",
+                                  r->method, rdata->outlook_session, sync_rv);
+                }
+                /* Do not 'return' here as we have to clean up the broken backend connection
+                   with the 'cleanup' label. */
                 break;
             }
             ap_log_rerror(APLOG_MARK, APLOG_DEBUG, 0, r,
@@ -1401,7 +1402,9 @@ static int proxy_msrpc_handler(request_rec *r, proxy_worker *worker,
                               "%s: Failed to sync Outlook Session %s: %d",
                               r->method, rdata->outlook_session, sync_rv);
                 (void)proxy_msrpc_validate_outlook_session(r, rdata, SESSION_BROKEN);
-                return HTTP_INTERNAL_SERVER_ERROR;
+                /* Do not 'return' here as we have to clean up the broken backend connection
+                   with the 'cleanup' label. */
+                break;
             }
         } else if (r->method_number == msrpc_methods[MSRPC_M_DATA_IN]) {
             int8_t sync_state = msrpc_sync_wait(sync_key, 5000);
@@ -1414,7 +1417,9 @@ static int proxy_msrpc_handler(request_rec *r, proxy_worker *worker,
                               "%s: Failed to sync Outlook Session %s: %d",
                               r->method, rdata->outlook_session, sync_state);
                 (void)proxy_msrpc_validate_outlook_session(r, rdata, SESSION_BROKEN);
-                return HTTP_INTERNAL_SERVER_ERROR;
+                /* Do not 'return' here as we have to clean up the broken backend connection
+                   with the 'cleanup' label. */
+                break;
             }
         }
 
@@ -1442,6 +1447,13 @@ cleanup:
                       r->method, (unsigned int)backend);
         ap_proxy_release_connection(proxy_function, backend, r->server);
     }
+
+    /* if something went wrong we should also close the client connection, otherwise Outlook will hang idle. */
+    ap_log_rerror(APLOG_MARK, APLOG_TRACE2, 0, r, "%s: setting keepalive from %d to AP_CONN_CLOSE", r->method, r->connection->keepalive);
+    r->connection->keepalive = AP_CONN_CLOSE;
+    apr_socket_close(ap_get_conn_socket(r->connection));
+    r->connection->aborted = 1;
+
     return status;
 }
 
