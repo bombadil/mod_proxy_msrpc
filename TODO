@@ -1,0 +1,16 @@
+TODO list
+
+When I implemented mod_proxy_msrpc, I took some notes about what might need to
+get improved later (e.g. to improve the code structure, style, or what ever).
+This file is an unstructured collection of such TODO items:
+
+- get rid of libuuid (APR provides that functionality too)
+
+- review sync files location
+
+- invalidate established tunnel on client/server disconnect
+
+- review session cache
+
+- track used backend and save it in a hash table using the
+  AssociationId so that load balancing is done correctly
