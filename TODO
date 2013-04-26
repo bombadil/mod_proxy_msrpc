@@ -12,5 +12,7 @@ This file is an unstructured collection of such TODO items:
 
 - review session cache
 
-- track used backend and save it in a hash table using the
-  AssociationId so that load balancing is done correctly
+- track used backend and save it in a socache hash table, using the
+  AssociationGroupId as lookup key so that requests with a given
+  AssociationGroupId are all routed to the same backend
+  (see also http://msdn.microsoft.com/en-us/library/cc244005.aspx).
