@@ -22,7 +22,8 @@
 #include <apr_errno.h>
 #include <uuid/uuid.h>
 
-#define MSRPC_PDU_MAXLENGTH 128
+#define MSRPC_PDU_MINLENGTH  10    // we need at least 10 bytes to read the PDU length
+#define MSRPC_PDU_MAXLENGTH 128    // in practice we haven't seen larger initial PDUs yet
 
 typedef struct msrpc_rts_pdu msrpc_rts_pdu_t;
 
