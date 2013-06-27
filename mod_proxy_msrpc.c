@@ -703,43 +703,71 @@ static int proxy_msrpc_read_and_parse_initial_pdu(request_rec *r, proxy_msrpc_re
     if (!rdata->client_bb) {
         rdata->client_bb = apr_brigade_create(p, c->bucket_alloc);
     }
-    apr_status_t rv = ap_get_brigade(c->input_filters, rdata->client_bb,
-                                     AP_MODE_READBYTES, APR_BLOCK_READ, 10);
-    if (rv != APR_SUCCESS) {
-        ap_log_rerror(APLOG_MARK, APLOG_ERR, rv, r,
-                      "%s: failed to read request body - ap_get_brigade", r->method);
-        return HTTP_BAD_REQUEST;
-    }
+    apr_status_t rv;
+    apr_off_t needed_bytes = MSRPC_PDU_MINLENGTH;
+    apr_off_t offset = 0;
+    apr_bucket_brigade *unparsed_bb = NULL;
+    do {
+        rv = ap_get_brigade(c->input_filters, rdata->client_bb,
+                                              AP_MODE_READBYTES, APR_BLOCK_READ, needed_bytes);
+        if (rv != APR_SUCCESS) {
+            ap_log_rerror(APLOG_MARK, APLOG_ERR, rv, r,
+                          "%s: failed to read request body - ap_get_brigade", r->method);
+            return HTTP_BAD_REQUEST;
+        }
 
-    apr_size_t buf_length = sizeof(rdata->initial_pdu);
-    rv = apr_brigade_flatten(rdata->client_bb, rdata->initial_pdu, &buf_length);
-    if (rv != APR_SUCCESS) {
-        ap_log_rerror(APLOG_MARK, APLOG_ERR, rv, r,
-                      "%s: failed to read request body - apr_brigade_flatten", r->method);
-        return HTTP_INTERNAL_SERVER_ERROR;
-    }
-    ap_log_rerror(APLOG_MARK, APLOG_TRACE2, 0, r,
-                  "%s: got %d bytes of request body from client", r->method, buf_length);
-    rdata->initial_pdu_offset = buf_length;
+        apr_size_t buf_length = sizeof(rdata->initial_pdu) - offset;
+        rv = apr_brigade_flatten(rdata->client_bb, &rdata->initial_pdu[offset], &buf_length);
+        if (rv != APR_SUCCESS) {
+            ap_log_rerror(APLOG_MARK, APLOG_ERR, rv, r,
+                          "%s: failed to read request body - apr_brigade_flatten", r->method);
+            return HTTP_INTERNAL_SERVER_ERROR;
+        }
+        if (buf_length <= 0) {
+            ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r,
+                          "%s: failed to read request body - apr_brigade_flatten returned no bytes", r->method);
+            return HTTP_INTERNAL_SERVER_ERROR;
+        }
+        ap_log_rerror(APLOG_MARK, APLOG_TRACE2, 0, r,
+                      "%s: got %d bytes of request body from client", r->method, buf_length);
 
-    /* drop the flattened date from the bucket brigade and
-     * cleanup client_bb for preparing next ap_get_brigade() */
-    apr_bucket *b = NULL;
-    rv = apr_brigade_partition(rdata->client_bb, buf_length, &b);
-    if (rv != APR_SUCCESS) {
-        ap_log_rerror(APLOG_MARK, APLOG_ERR, rv, r,
-                      "%s: failed to read request body - apr_brigade_partition", r->method);
-        return HTTP_INTERNAL_SERVER_ERROR;
-    }
-    apr_bucket_brigade *unparsed_bb = apr_brigade_split(rdata->client_bb, b);
-    rv = apr_brigade_cleanup(rdata->client_bb);
-    if (rv != APR_SUCCESS) {
-        ap_log_rerror(APLOG_MARK, APLOG_ERR, rv, r,
-                      "%s: failed to read request body - apr_brigade_cleanup", r->method);
-        return HTTP_INTERNAL_SERVER_ERROR;
-    }
+        /* drop the flattened data from the bucket brigade and
+         * cleanup client_bb for preparing next ap_get_brigade() */
+        apr_bucket *b = NULL;
+        rv = apr_brigade_partition(rdata->client_bb, buf_length, &b);
+        if (rv != APR_SUCCESS) {
+            ap_log_rerror(APLOG_MARK, APLOG_ERR, rv, r,
+                          "%s: failed to read request body - apr_brigade_partition", r->method);
+            return HTTP_INTERNAL_SERVER_ERROR;
+        }
+        unparsed_bb = apr_brigade_split(rdata->client_bb, b);
+        rv = apr_brigade_cleanup(rdata->client_bb);
+        if (rv != APR_SUCCESS) {
+            ap_log_rerror(APLOG_MARK, APLOG_ERR, rv, r,
+                          "%s: failed to read request body - apr_brigade_cleanup", r->method);
+            return HTTP_INTERNAL_SERVER_ERROR;
+        }
 
-    apr_size_t pdu_length = 10;
+        // do byte accounting for loop termination condition
+        offset += buf_length;
+        if (needed_bytes >= buf_length) {
+            needed_bytes -= buf_length;
+        } else {
+            needed_bytes = 0;
+        }
+        rdata->initial_pdu_offset += buf_length;
+
+        // sanity check
+        if (needed_bytes > 0 && unparsed_bb && !APR_BRIGADE_EMPTY(unparsed_bb)) {
+            ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r,
+                          "%s: failed to read request body - unparsed_bb is not empty, "
+                          "but still %llu bytes needed from request body", r->method, needed_bytes);
+            return HTTP_INTERNAL_SERVER_ERROR;
+        }
+    } while (needed_bytes > 0);
+
+    apr_size_t buf_length = rdata->initial_pdu_offset;
+    apr_size_t pdu_length = MSRPC_PDU_MINLENGTH;
     rv = msrpc_pdu_get_length(rdata->initial_pdu, &pdu_length);
     if (rv != APR_SUCCESS) {
         ap_log_rerror(APLOG_MARK, APLOG_ERR, rv, r,
