@@ -1457,13 +1457,6 @@ static int proxy_msrpc_handler(request_rec *r, proxy_worker *worker,
                    with the 'cleanup' label. */
                 break;
             }
-
-            /* All the subsequent traffic on this connection is RPC traffic, and there is
-             * no way to downgrade the connection back to HTTP. For this reason there is
-             * no point in keeping the mod_reqtimeout filter in the chain.
-             * Otherwise it would close Outlook connections after the configured timeout */
-            proxy_msrpc_remove_reqtimeout(r->input_filters);
-
         } else if (r->method_number == msrpc_methods[MSRPC_M_DATA_IN]) {
             int8_t sync_state = msrpc_sync_wait(sync_key, 5000);
             if (sync_state == SESSION_TUNNEL) {
@@ -1480,6 +1473,12 @@ static int proxy_msrpc_handler(request_rec *r, proxy_worker *worker,
                 break;
             }
         }
+
+        /* All the subsequent traffic on this connection is RPC traffic, and there is
+         * no way to downgrade the connection back to HTTP. For this reason there is
+         * no point in keeping the mod_reqtimeout filter in the chain.
+         * Otherwise it would close Outlook connections after the configured timeout */
+        proxy_msrpc_remove_reqtimeout(r->input_filters);
 
         /* Step Six: tunnel traffic from backend to frontend and vice versa */
         status = proxy_msrpc_tunnel(p, r, rdata, backend);
