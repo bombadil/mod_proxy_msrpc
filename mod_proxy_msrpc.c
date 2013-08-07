@@ -529,6 +529,29 @@ static int proxy_msrpc_send_pdu(request_rec *r, char *pdu, apr_off_t pdu_buflen,
     return proxy_msrpc_pass_brigade(bb->bucket_alloc, r, p_conn, destination, bb, 1);
 }
 
+/* Search thru the input filters and remove the reqtimeout one */
+static void proxy_msrpc_remove_reqtimeout(ap_filter_t *next)
+{
+    ap_filter_t *reqtimeout = NULL;
+    ap_filter_rec_t *filter;
+
+    filter = ap_get_input_filter_handle("reqtimeout");
+    if (!filter) {
+        return;
+    }
+
+    while (next) {
+        if (next->frec == filter) {
+            reqtimeout = next;
+            break;
+        }
+        next = next->next;
+    }
+    if (reqtimeout) {
+        ap_remove_input_filter(reqtimeout);
+    }
+}
+
 static
 int proxy_msrpc_tunnel(apr_pool_t *p, request_rec *r,
                        proxy_msrpc_request_data_t *rdata, proxy_conn_rec *p_conn)
@@ -1434,6 +1457,13 @@ static int proxy_msrpc_handler(request_rec *r, proxy_worker *worker,
                    with the 'cleanup' label. */
                 break;
             }
+
+            /* All the subsequent traffic on this connection is RPC traffic, and there is
+             * no way to downgrade the connection back to HTTP. For this reason there is
+             * no point in keeping the mod_reqtimeout filter in the chain.
+             * Otherwise it would close Outlook connections after the configured timeout */
+            proxy_msrpc_remove_reqtimeout(r->input_filters);
+
         } else if (r->method_number == msrpc_methods[MSRPC_M_DATA_IN]) {
             int8_t sync_state = msrpc_sync_wait(sync_key, 5000);
             if (sync_state == SESSION_TUNNEL) {
