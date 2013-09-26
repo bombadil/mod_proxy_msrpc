@@ -23,14 +23,29 @@ in front of a MS Exchange server offering Outlook Anywhere services.
 Without it, Apache would block any Outlook Anywhere requests for reasons
 documented very well in https://issues.apache.org/bugzilla/show_bug.cgi?id=40029.
 
+Outlook and Exchange use an extended version of DCE RPC called I<MSRPC> to
+communicate with each other.
+When I<Outlook Anywhere> is in use, the MSRPC messages are wrapped into HTTP
+alike requests and responses.
+The mod_proxy_msrpc module detects these MSRPC messages and forwards it to the
+server or client as needed.
+As soon as the initial handshake completed, i.e. Exchange accepted the
+connecting client, the mod_proxy_msrpc module switches into tunnel mode and
+forwards all data from client to server and vice versa.
+
 =head1 CAVEATS
 
-The module focuses only on the traffic that is handled by HTTP alike requests
-using RPC_IN_DATA and RPC_OUT_DATA methods.
 Some older Exchange versions (e.g. Exchange Server 2007) are known to sync
-offline address books and calendar information via other protocols.
+offline address books and calendar information via other protocols than Outlook
+Anywhere (i.e. MSRPC via HTTP).
 For these Exchange versions functionality of this module is limited to
 enabling receiving and sending mail.
+I.e. Address book and calendar synchronization doesn't work with these Exchange
+versions.
+
+Currently the module doesn't work in 64 bit environments.
+See https://github.com/bombadil/mod_proxy_msrpc/issues/2 for more information
+about this issue and for tracking its progress.
 
 =head1 DIAGNOSTICS
 
