@@ -7,17 +7,17 @@ CFLAGS ?= -Wall -Werror
 
 all:	check_msrpc_pdu_parser check_msrpc_sync
 
-check_msrpc_pdu_parser.o:       check_msrpc_pdu_parser.c ../msrpc_pdu_parser.h ../msrpc_pdu_private.h
-	gcc $(CFLAGS) $(APR_CFLAGS) -I.. -c -o check_msrpc_pdu_parser.o check_msrpc_pdu_parser.c
+check_msrpc_pdu_parser.o:       check_msrpc_pdu_parser.c ../src/msrpc_pdu_parser.h ../src/msrpc_pdu_private.h
+	gcc $(CFLAGS) $(APR_CFLAGS) -I../src -c -o check_msrpc_pdu_parser.o check_msrpc_pdu_parser.c
 
-check_msrpc_sync.o:       check_msrpc_sync.c ../msrpc_sync.h
-	gcc $(CFLAGS) -I.. -c -o check_msrpc_sync.o check_msrpc_sync.c
+check_msrpc_sync.o:       check_msrpc_sync.c ../src/msrpc_sync.h
+	gcc $(CFLAGS) -I../src -c -o check_msrpc_sync.o check_msrpc_sync.c
 
-msrpc_pdu_parser.o:	../msrpc_pdu_parser.c ../msrpc_pdu_parser.h ../msrpc_pdu_private.h
-	gcc $(CFLAGS) $(APR_CFLAGS) $(APR_LIBS) -I.. -c ../msrpc_pdu_parser.c
+msrpc_pdu_parser.o:	../src/msrpc_pdu_parser.c ../src/msrpc_pdu_parser.h ../src/msrpc_pdu_private.h
+	gcc $(CFLAGS) $(APR_CFLAGS) $(APR_LIBS) -I../src -c ../src/msrpc_pdu_parser.c
 
-msrpc_sync.o:   ../msrpc_sync.c ../msrpc_sync.h
-	gcc $(CFLAGS) -D_GNU_SOURCE -I.. -c ../msrpc_sync.c
+msrpc_sync.o:   ../src/msrpc_sync.c ../src/msrpc_sync.h
+	gcc $(CFLAGS) -D_GNU_SOURCE -I../src -c ../src/msrpc_sync.c
 
 check_msrpc_pdu_parser: check_msrpc_pdu_parser.o msrpc_pdu_parser.o
 	gcc $(CFLAGS) $(APR_CFLAGS) $(APR_LIBS) $(UUID_LIBS) -o check_msrpc_pdu_parser check_msrpc_pdu_parser.o msrpc_pdu_parser.o $(CHECK_LIBS)
