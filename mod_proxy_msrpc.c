@@ -784,7 +784,7 @@ static int proxy_msrpc_read_and_parse_initial_pdu(request_rec *r, proxy_msrpc_re
         if (needed_bytes > 0 && unparsed_bb && !APR_BRIGADE_EMPTY(unparsed_bb)) {
             ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r,
                           "%s: failed to read request body - unparsed_bb is not empty, "
-                          "but still %llu bytes needed from request body", r->method, needed_bytes);
+                          "but still %lu bytes needed from request body", r->method, needed_bytes);
             return HTTP_INTERNAL_SERVER_ERROR;
         }
     } while (needed_bytes > 0);
@@ -809,7 +809,7 @@ static int proxy_msrpc_read_and_parse_initial_pdu(request_rec *r, proxy_msrpc_re
     }
     if (pdu_length > rdata->body_length) {
         ap_log_rerror(APLOG_MARK, APLOG_ERR, APR_FROM_OS_ERROR(EPROTO), r,
-                      "%s: failed to read request body - PDU length %u is larger than HTTP request body length %lld",
+                      "%s: failed to read request body - PDU length %u is larger than HTTP request body length %ld",
                       r->method, pdu_length, rdata->body_length);
         return HTTP_INTERNAL_SERVER_ERROR;
     }
@@ -886,7 +886,7 @@ static int proxy_msrpc_read_and_parse_initial_pdu(request_rec *r, proxy_msrpc_re
     }
     uuid_unparse(*vc_cookie, rdata->outlook_session);
     ap_log_rerror(APLOG_MARK, APLOG_DEBUG, 0, r,
-                  "%s: got initial MSRPC pdu (%llu bytes) for Outlook Session %s",
+                  "%s: got initial MSRPC pdu (%lu bytes) for Outlook Session %s",
                   r->method, rdata->initial_pdu_offset, rdata->outlook_session);
 
     rv = HTTP_INTERNAL_SERVER_ERROR;
@@ -1039,7 +1039,7 @@ static int proxy_msrpc_read_server_response(request_rec *r, proxy_conn_rec *back
         r->bytes_sent = body_length;
         /* simplistic read request body, if present */
         ap_log_rerror(APLOG_MARK, APLOG_TRACE2, 0, r,
-                      "%s: HTTP response body size: %lld bytes",
+                      "%s: HTTP response body size: %ld bytes",
                       r->method, body_length);
         assert(APR_BRIGADE_EMPTY(bb));
         rv = ap_get_brigade(backend->connection->input_filters, bb, AP_MODE_READBYTES,
@@ -1083,8 +1083,8 @@ static apr_status_t proxy_msrpc_disconnect_backend(void *data) {
     ap_set_module_config(c->conn_config, &proxy_msrpc_module, NULL);
     d->conn->close = 1;
     ap_log_error(APLOG_MARK, APLOG_TRACE2, 0, d->server,
-                  "%s: Client connection cleanup triggered release of backend connection 0x%x back to pool",
-                  d->proxy_function, (unsigned int)d->conn);
+                  "%s: Client connection cleanup triggered release of backend connection 0x%pp back to pool",
+                  d->proxy_function, d->conn);
     ap_proxy_release_connection(d->proxy_function, d->conn, d->server);
     return APR_SUCCESS;
 }
@@ -1095,8 +1095,8 @@ static int proxy_msrpc_connect_backend(request_rec *r, const char *proxy_functio
     msrpc_backend_t *d = (msrpc_backend_t *)ap_get_module_config(r->connection->conn_config, &proxy_msrpc_module);
     if (d && d->conn) {
         ap_log_rerror(APLOG_MARK, APLOG_TRACE2, 0, r,
-                      "%s: re-using already established connection 0x%x to backend: %s",
-                      r->method, (unsigned int)d->conn, d->conn->hostname);
+                      "%s: re-using already established connection 0x%pp to backend: %s",
+                      r->method, d->conn, d->conn->hostname);
         *backendp = d->conn;
         return OK;
     }
@@ -1110,8 +1110,8 @@ static int proxy_msrpc_connect_backend(request_rec *r, const char *proxy_functio
 
     *backendp = backend;
     ap_log_rerror(APLOG_MARK, APLOG_TRACE2, 0, r,
-                  "%s: acquired backend connection 0x%x",
-                  r->method, (unsigned int)backend);
+                  "%s: acquired backend connection 0x%pp",
+                  r->method, backend);
 
     backend->is_ssl = is_ssl;
 
@@ -1198,8 +1198,8 @@ cleanup:
     if (backend) {
         backend->close = 1;
         ap_log_rerror(APLOG_MARK, APLOG_TRACE2, 0, r,
-                      "%s: backend connection 0x%x setup failed, returning to pool",
-                      r->method, (unsigned int)backend);
+                      "%s: backend connection 0x%pp setup failed, returning to pool",
+                      r->method, backend);
         ap_proxy_release_connection(proxy_function, backend, r->server);
     }
     return status;
@@ -1363,8 +1363,8 @@ static int proxy_msrpc_handler(request_rec *r, proxy_worker *worker,
     if (r->method_number == msrpc_methods[MSRPC_M_DATA_OUT]) {
         if (rdata->body_length != rdata->initial_pdu_offset) {
             ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r,
-                          "MSRPC PDU length %llu of RPC_OUT_DATA request "
-                          "does not match request body length %lld",
+                          "MSRPC PDU length %lu of RPC_OUT_DATA request "
+                          "does not match request body length %ld",
                           rdata->initial_pdu_offset, rdata->body_length);
             return HTTP_BAD_REQUEST;
         }
@@ -1500,8 +1500,8 @@ cleanup:
         /* close backend connection */
         backend->close = 1;
         ap_log_rerror(APLOG_MARK, APLOG_TRACE2, 0, r,
-                      "%s: handler working on backend connection 0x%x finished, returning connection to pool",
-                      r->method, (unsigned int)backend);
+                      "%s: handler working on backend connection 0x%pp finished, returning connection to pool",
+                      r->method, backend);
         ap_proxy_release_connection(proxy_function, backend, r->server);
     }
 
