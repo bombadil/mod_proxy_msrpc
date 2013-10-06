@@ -1,9 +1,8 @@
-APR_CFLAGS=$(shell pkg-config --cflags apr-1)
-APR_LIBS=$(shell pkg-config --libs apr-1)
-CHECK_CFLAGS=$(shell pkg-config --cflags check)
-CHECK_LIBS=-lpthread $(shell pkg-config --libs check)
-UUID_LIBS=-luuid
-CFLAGS ?= -Wall -Werror
+APR_CFLAGS=@APR_CFLAGS@
+APR_LIBS=@APR_LIBS@
+CHECK_CFLAGS=@CHECK_CFLAGS@
+CHECK_LIBS=-lpthread @CHECK_LIBS@
+UUID_LIBS=@UUIDLIB@
 
 all:	check_msrpc_pdu_parser check_msrpc_sync
 
@@ -31,3 +30,5 @@ clean:
 check:	check_msrpc_pdu_parser check_msrpc_sync
 	./check_msrpc_pdu_parser
 	./check_msrpc_sync
+
+.PHONY:	all check clean

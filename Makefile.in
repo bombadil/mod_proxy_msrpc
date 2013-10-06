@@ -1,0 +1,19 @@
+all:
+	make -C src all
+
+check: all
+	make -C test check
+
+install: all
+	$(warning )
+	$(warning ---[ MANUAL INSTALLATION REQUIRED ]---)
+	$(warning To install the module, please copy the file src/.libs/mod_proxy_msrpc.so)
+	$(warning to the directory where Apache httpd loads its modules from.)
+	$(warning )
+	$(error The 'install' target isn't implemented yet)
+
+clean:
+	make -C src clean
+	make -C test clean
+
+.PHONY: all clean check install

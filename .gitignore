@@ -1,0 +1,13 @@
+Makefile
+/aclocal.m4
+/autom4te.cache
+/config.log
+/config.status
+/test/check.log
+/test/check_msrpc_pdu_parser
+/test/check_msrpc_sync
+.libs
+*.la
+*.lo
+*.slo
+*.o
