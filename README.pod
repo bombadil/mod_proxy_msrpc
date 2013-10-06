@@ -6,7 +6,8 @@ mod_proxy_msrpc - Apache module for Outlook Anywhere support in reverse proxy se
 
 Build the module:
 
-    apxs -luuid -c mod_proxy_msrpc.c msrpc_pdu_parser.c msrpc_sync.c
+    ./configure
+    make
 
 Load the module:
 
