@@ -43,10 +43,6 @@ enabling receiving and sending mail.
 I.e. Address book and calendar synchronization doesn't work with these Exchange
 versions.
 
-Currently the module doesn't work in 64 bit environments.
-See https://github.com/bombadil/mod_proxy_msrpc/issues/2 for more information
-about this issue and for tracking its progress.
-
 =head1 DIAGNOSTICS
 
 If you encounter any problems, you can set following directive:
