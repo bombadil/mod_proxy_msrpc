@@ -752,7 +752,7 @@ static int proxy_msrpc_read_and_parse_initial_pdu(request_rec *r, proxy_msrpc_re
             return HTTP_INTERNAL_SERVER_ERROR;
         }
         ap_log_rerror(APLOG_MARK, APLOG_TRACE2, 0, r,
-                      "%s: got %d bytes of request body from client", r->method, buf_length);
+                      "%s: got %ld bytes of request body from client", r->method, buf_length);
 
         /* drop the flattened data from the bucket brigade and
          * cleanup client_bb for preparing next ap_get_brigade() */
@@ -799,28 +799,28 @@ static int proxy_msrpc_read_and_parse_initial_pdu(request_rec *r, proxy_msrpc_re
     }
     if (pdu_length < 10) {
         ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r,
-                      "%s: failed to read request body - bad PDU length %u", r->method, pdu_length);
+                      "%s: failed to read request body - bad PDU length %lu", r->method, pdu_length);
         return HTTP_BAD_REQUEST;
     }
     if (pdu_length > sizeof(rdata->initial_pdu)) {
         ap_log_rerror(APLOG_MARK, APLOG_ERR, APR_FROM_OS_ERROR(EMSGSIZE), r,
-                      "%s: failed to read request body - insufficient buffer for PDU length %u", r->method, pdu_length);
+                      "%s: failed to read request body - insufficient buffer for PDU length %lu", r->method, pdu_length);
         return HTTP_INTERNAL_SERVER_ERROR;
     }
     if (pdu_length > rdata->body_length) {
         ap_log_rerror(APLOG_MARK, APLOG_ERR, APR_FROM_OS_ERROR(EPROTO), r,
-                      "%s: failed to read request body - PDU length %u is larger than HTTP request body length %ld",
+                      "%s: failed to read request body - PDU length %lu is larger than HTTP request body length %ld",
                       r->method, pdu_length, rdata->body_length);
         return HTTP_INTERNAL_SERVER_ERROR;
     }
     ap_log_rerror(APLOG_MARK, APLOG_TRACE1, 0, r,
-                  "%s: MSRPC PDU length: %u (%u already in buffer)", r->method, pdu_length, buf_length);
+                  "%s: MSRPC PDU length: %lu (%lu already in buffer)", r->method, pdu_length, buf_length);
 
     if (pdu_length > buf_length) {
         assert(APR_BRIGADE_EMPTY(unparsed_bb));
         apr_size_t remaining_length = pdu_length - buf_length;
         ap_log_rerror(APLOG_MARK, APLOG_TRACE2, 0, r,
-                      "%s: trying to get %u more bytes from request body", r->method, remaining_length);
+                      "%s: trying to get %lu more bytes from request body", r->method, remaining_length);
         rv = ap_get_brigade(c->input_filters, rdata->client_bb,
                             AP_MODE_READBYTES, APR_BLOCK_READ, remaining_length);
         if (rv != APR_SUCCESS) {
@@ -856,7 +856,7 @@ static int proxy_msrpc_read_and_parse_initial_pdu(request_rec *r, proxy_msrpc_re
     assert(rdata->initial_pdu_offset >= pdu_length);
     rdata->initial_pdu_offset = pdu_length; // excess bytes are still in the bucket brigade rdata->client_bb
     ap_log_rerror(APLOG_MARK, APLOG_TRACE1, 0, r,
-                  "%s: MSRPC PDU length: %u (completely in buffer)", r->method, pdu_length);
+                  "%s: MSRPC PDU length: %lu (completely in buffer)", r->method, pdu_length);
 
     /* cleanup bucket brigades */
     rv = ap_save_brigade(c->input_filters, &rdata->client_bb, &unparsed_bb, r->pool);
@@ -934,7 +934,7 @@ static int proxy_msrpc_read_server_response(request_rec *r, proxy_conn_rec *back
     // check server response
     if (!apr_date_checkmask(buf, "HTTP/1.1 ###*")) {
         ap_log_rerror(APLOG_MARK, APLOG_INFO, 0, r,
-                      "%s: bad response from server: [%.*s]", r->method, buf_len, buf);
+                      "%s: bad response from server: [%.*s]", r->method, (int)buf_len, buf);
         return HTTP_BAD_GATEWAY;
     }
 
