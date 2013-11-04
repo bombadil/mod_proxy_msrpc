@@ -25,7 +25,7 @@ check_msrpc_sync: check_msrpc_sync.o msrpc_sync.o
 	gcc $(CFLAGS) -o check_msrpc_sync check_msrpc_sync.o msrpc_sync.o $(CHECK_LIBS)
 
 clean:
-	rm -f check_msrpc_pdu_parser check_msrpc_sync *.o check.log
+	rm -f check_msrpc_pdu_parser check_msrpc_sync *.o check.log Makefile
 
 check:	check_msrpc_pdu_parser check_msrpc_sync
 	./check_msrpc_pdu_parser
