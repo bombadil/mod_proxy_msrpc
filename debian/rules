@@ -1,0 +1,12 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+
+%:
+	dh $@ --with apache2
+
+override_dh_auto_install:
+	# Intentionally skip dh_auto_install as we use the install mechanism provided by dh_apache2
+
+override_dh_auto_clean:
+	dh_auto_clean
+	rm -vf Makefile config.log config.status src/Makefile test/Makefile

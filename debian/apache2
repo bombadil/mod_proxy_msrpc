@@ -1,0 +1,2 @@
+mod  debian/proxy_msrpc.load
+mod  src/.libs/mod_proxy_msrpc.so

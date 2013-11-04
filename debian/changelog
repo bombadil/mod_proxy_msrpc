@@ -1,0 +1,5 @@
+mod-proxy-msrpc (0.2-1) unstable; urgency=low
+
+  * Initial release (Closes: #728713)
+
+ -- Micha Lenk <micha@debian.org>  Mon, 04 Nov 2013 21:13:50 +0100

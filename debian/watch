@@ -1,0 +1,2 @@
+version=3
+https://github.com/bombadil/mod_proxy_msrpc/releases /bombadil/mod_proxy_msrpc/archive/mod_proxy_msrpc-(.*)\.tar\.gz
