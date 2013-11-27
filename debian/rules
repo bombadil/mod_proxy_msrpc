@@ -9,4 +9,4 @@ override_dh_auto_install:
 
 override_dh_auto_clean:
 	dh_auto_clean
-	rm -vf Makefile config.log config.status src/Makefile test/Makefile
+	rm -vf Makefile config.log config.status src/Makefile test/Makefile aclocal.m4
