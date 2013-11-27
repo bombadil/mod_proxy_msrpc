@@ -2,7 +2,7 @@ Source: mod-proxy-msrpc
 Section: httpd
 Priority: extra
 Maintainer: Micha Lenk <micha@debian.org>
-Build-Depends: debhelper (>= 8.0.0),
+Build-Depends: debhelper (>= 8.0.0), pkg-config,
  apache2-dev (>= 2.4), uuid-dev,
  check
 Standards-Version: 3.9.4
