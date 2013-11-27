@@ -1,2 +1,2 @@
-# Depends: proxy
+# Depends: proxy socache_shmcb
 LoadModule proxy_msrpc_module /usr/lib/apache2/modules/mod_proxy_msrpc.so
