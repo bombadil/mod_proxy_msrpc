@@ -3,7 +3,8 @@ Upstream-Name: mod_proxy_msrpc
 Source: https://github.com/bombadil/mod_proxy_msrpc
 
 Files: *
-Copyright: 2013 Micha Lenk <micha@lenk.info>
+Copyright: 2013 Astaro GmbH & Co. KG - a Sophos company,
+ Micha Lenk <micha@lenk.info>
 License: Apache-2.0
 
 Files: debian/*
