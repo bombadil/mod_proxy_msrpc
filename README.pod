@@ -28,8 +28,8 @@ Outlook and Exchange use an extended version of DCE RPC called I<MSRPC> to
 communicate with each other.
 When I<Outlook Anywhere> is in use, the MSRPC messages are wrapped into HTTP
 alike requests and responses.
-The mod_proxy_msrpc module detects these MSRPC messages and forwards it to the
-server or client as needed.
+The mod_proxy_msrpc module detects these MSRPC messages and forwards them to
+the server or client as needed.
 As soon as the initial handshake completed, i.e. Exchange accepted the
 connecting client, the mod_proxy_msrpc module switches into tunnel mode and
 forwards all data from client to server and vice versa.

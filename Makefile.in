@@ -15,5 +15,6 @@ install: all
 clean:
 	make -C src clean
 	make -C test clean
+	rm -vf Makefile config.log config.status
 
 .PHONY: all clean check install

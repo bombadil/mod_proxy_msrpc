@@ -9,6 +9,6 @@ all: .libs/mod_proxy_msrpc.so
 check:
 
 clean:
-	rm -rf .libs *.lo *.slo mod_proxy_msrpc.la
+	rm -rf .libs *.lo *.slo mod_proxy_msrpc.la Makefile
 
 .PHONY: all check clean

@@ -1,3 +1,9 @@
+mod-proxy-msrpc (0.4-1) unstable; urgency=low
+
+  * New upstream version
+
+ -- Micha Lenk <micha@debian.org>  Mon, 03 Feb 2014 21:46:00 +0100
+
 mod-proxy-msrpc (0.2-1) unstable; urgency=low
 
   * Initial release (Closes: #728713)
