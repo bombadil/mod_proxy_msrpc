@@ -1,6 +1,7 @@
 mod-proxy-msrpc (0.4-1) unstable; urgency=low
 
   * New upstream version
+  * Package is compliant to Debian Policy 3.9.5 (no changes needed).
 
  -- Micha Lenk <micha@debian.org>  Mon, 03 Feb 2014 21:46:00 +0100
 
