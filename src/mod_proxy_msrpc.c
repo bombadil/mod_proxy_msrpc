@@ -94,6 +94,7 @@ typedef struct {
     char initial_pdu[MSRPC_INITIAL_PDU_BUFLEN];
     apr_off_t initial_pdu_offset;
     char outlook_session[37];
+    int initialized;
 } proxy_msrpc_request_data_t;
 
 typedef struct _msrpc_backend {
@@ -1373,6 +1374,17 @@ static int proxy_msrpc_handler(request_rec *r, proxy_worker *worker,
                 return HTTP_BAD_REQUEST;
             }
         }
+
+        /* if we made it here, we succeeded to read the initial PDU from the client */
+        rdata->initialized = 1;
+    } else {
+        if (!rdata->initialized) {
+            ap_log_rerror(APLOG_MARK, APLOG_NOTICE, 0, r, "MSRPC initialization for this request failed, cannot complete connection set up");
+            goto cleanup;
+        }
+
+        /* set the server bucket brigade to the one in use curretly */
+        rdata->server_bb = server_bb;
     }
 
     apr_uri_t *uri = apr_palloc(p, sizeof(*uri));
