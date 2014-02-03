@@ -1347,26 +1347,31 @@ static int proxy_msrpc_handler(request_rec *r, proxy_worker *worker,
 
     /* store request body length for later use */
     proxy_msrpc_request_data_t *rdata = ap_get_module_config(r->request_config, &proxy_msrpc_module);
-    assert(rdata == NULL);
-    rdata = apr_pcalloc(r->pool, sizeof(proxy_msrpc_request_data_t));
-    rdata->server_bb = server_bb;
-    rdata->body_length = request_body_length;
-    ap_set_module_config(r->request_config, &proxy_msrpc_module, rdata);
 
-    /* wait for enough data coming in to parse the first MSRPC PDU */
-    status = proxy_msrpc_read_and_parse_initial_pdu(r, rdata);
-    if (status != OK) {
-        goto cleanup;
-    }
+    /* If we hit this point and rdata is NOT null this means mod_proxy called the
+     * handler for a different backend server and it failed. Because
+     * proxy_msrpc_read_and_parse_initial_pdu consumes the input brigade we
+     * must not call it again. Hence reuse rdata. */
+    if (rdata == NULL) {
+        rdata = apr_pcalloc(r->pool, sizeof(proxy_msrpc_request_data_t));
+        rdata->server_bb = server_bb;
+        rdata->body_length = request_body_length;
+        ap_set_module_config(r->request_config, &proxy_msrpc_module, rdata);
 
-    /* body length of RPC_OUT_DATA requests needs to match PDU length */
-    if (r->method_number == msrpc_methods[MSRPC_M_DATA_OUT]) {
-        if (rdata->body_length != rdata->initial_pdu_offset) {
-            ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r,
-                          "MSRPC PDU length %lu of RPC_OUT_DATA request "
-                          "does not match request body length %ld",
-                          rdata->initial_pdu_offset, rdata->body_length);
-            return HTTP_BAD_REQUEST;
+        /* wait for enough data coming in to parse the first MSRPC PDU */
+        status = proxy_msrpc_read_and_parse_initial_pdu(r, rdata);
+        if (status != OK) {
+            goto cleanup;
+        }
+        /* body length of RPC_OUT_DATA requests needs to match PDU length */
+        if (r->method_number == msrpc_methods[MSRPC_M_DATA_OUT]) {
+            if (rdata->body_length != rdata->initial_pdu_offset) {
+                ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r,
+                              "MSRPC PDU length %llu of RPC_OUT_DATA request "
+                              "does not match request body length %lld",
+                              rdata->initial_pdu_offset, rdata->body_length);
+                return HTTP_BAD_REQUEST;
+            }
         }
     }
 
