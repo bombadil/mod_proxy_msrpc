@@ -1017,8 +1017,8 @@ static int proxy_msrpc_read_server_response(request_rec *r, proxy_conn_rec *back
 
     if (backend_status_code != HTTP_OK) {
         ap_log_rerror(APLOG_MARK, APLOG_DEBUG, 0, r,
-                      "%s: server refused MSRPC request: [%s]",
-                      r->method, r->status_line);
+                      "%s: server refused MSRPC request for %s: [%s]",
+                      r->method, r->unparsed_uri, r->status_line);
     }
 
     /* forward response headers to client */
