@@ -1,3 +1,10 @@
+mod-proxy-msrpc (0.4-2) UNRELEASED; urgency=low
+
+  * (NOT RELEASED YET) 
+  * Don't let apxs hide the used build flags by setting LTFLAGS.
+
+ -- Micha Lenk <micha@debian.org>  Sun, 23 Feb 2014 20:43:21 +0100
+
 mod-proxy-msrpc (0.4-1) unstable; urgency=low
 
   * New upstream version
