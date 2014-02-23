@@ -1,6 +1,9 @@
 #!/usr/bin/make -f
 # -*- makefile -*-
 
+# Don't let apxs hide the used build flags
+LTFLAGS=--no-silent --verbose
+
 %:
 	dh $@ --with apache2
 
