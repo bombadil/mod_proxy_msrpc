@@ -1337,8 +1337,8 @@ static int proxy_msrpc_handler(request_rec *r, proxy_worker *worker,
                       r->method, status);
         if (status != HTTP_UNAUTHORIZED) {
             ap_log_rerror(APLOG_MARK, APLOG_INFO, 0, r,
-                          "%s: proxy_msrpc_read_server_response() returned unexpected status code %d from %pI (%s)",
-                          r->method, status, worker->cp->addr, worker->s->hostname);
+                          "%s: server %pI (%s) did not accept request without PDU (HTTP status code %d)",
+                          r->method, worker->cp->addr, worker->s->hostname, status);
         }
 
         ap_log_rerror(APLOG_MARK, APLOG_TRACE2, 0, r,
@@ -1440,8 +1440,8 @@ static int proxy_msrpc_handler(request_rec *r, proxy_worker *worker,
                           r->method, status);
             if (status != HTTP_OK) {
                 ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r,
-                              "%s: proxy_msrpc_read_server_response() returned unexpected status code %d from %pI (%s)",
-                              r->method, status, worker->cp->addr, worker->s->hostname);
+                              "%s: server %pI (%s) did not accept initial PDU (HTTP status code %d)",
+                              r->method, worker->cp->addr, worker->s->hostname, status);
 
                 /* mark tunnel mode as failed */
                 proxy_msrpc_validate_outlook_session(r, rdata, SESSION_BROKEN);
