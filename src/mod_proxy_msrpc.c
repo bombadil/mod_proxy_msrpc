@@ -1316,7 +1316,7 @@ static int proxy_msrpc_handler(request_rec *r, proxy_worker *worker,
         return status;
     }
 
-    server_bb = apr_brigade_create(p, backend->connection->bucket_alloc);
+    server_bb = apr_brigade_create(backend->connection->pool, backend->connection->bucket_alloc);
     if (request_body_length == 0) {
         /* forward initial HTTP request without MSRPC payload */
         status = proxy_msrpc_send_request_headers(r, locurl, server_bb,
