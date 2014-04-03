@@ -934,7 +934,7 @@ static int proxy_msrpc_read_server_response(request_rec *r, proxy_conn_rec *back
 
     // check server response
     if (!apr_date_checkmask(buf, "HTTP/1.1 ###*")) {
-        ap_log_rerror(APLOG_MARK, APLOG_INFO, 0, r,
+        ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r,
                       "%s: bad response from server: [%.*s]", r->method, (int)buf_len, buf);
         return HTTP_BAD_GATEWAY;
     }
