@@ -502,6 +502,9 @@ static int proxy_msrpc_send_request_headers(request_rec *r, char *url,
             continue;
         }
 
+        ap_log_rerror(APLOG_MARK, APLOG_TRACE3, 0, r,
+                      "%s: Sending HTTP request header line [%s: %s]", r->method, headers_in[i].key, headers_in[i].val);
+
         buf = apr_pstrcat(p, headers_in[i].key, ": ", headers_in[i].val, CRLF, NULL);
         b = apr_bucket_pool_create(buf, strlen(buf), p, bb->bucket_alloc);
         APR_BRIGADE_INSERT_TAIL(bb, b);
