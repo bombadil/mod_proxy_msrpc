@@ -22,6 +22,10 @@
 #include <netinet/in.h>
 #include <uuid/uuid.h>
 
+#define MSRPC_PDU_DATA_REPRESENTATION_BIG_ENDIAN	0x10000000
+#define MSRPC_PDU_DATA_REPRESENTATION_LITTLE_ENDIAN	0x00000010
+#define swap_bytes_uint16_t(x) ((((x) & 0x00FF) << 8) | (((x) & 0xFF00) >> 8))
+
 /* interpretation of such PDUs, see Microsoft's documentation:
  * http://msdn.microsoft.com/en-us/library/cc244017.aspx (RTS PDU header)
  * http://msdn.microsoft.com/en-us/library/cc244018.aspx (RTS PDU body)

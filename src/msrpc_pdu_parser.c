@@ -72,6 +72,8 @@ static const char const *msrpc_rts_pdu_command_name[] = {
     NULL,
 };
 
+#define MSRPC_PDU_IS_LITTLE_ENDIAN (pdu->data_representation == MSRPC_PDU_DATA_REPRESENTATION_LITTLE_ENDIAN)
+
 apr_status_t msrpc_pdu_get_length(const char *buf, apr_size_t *length)
 {
     msrpc_pdu_t *pdu = (msrpc_pdu_t *)buf;
@@ -81,7 +83,10 @@ apr_status_t msrpc_pdu_get_length(const char *buf, apr_size_t *length)
         return APR_INCOMPLETE;
     }
 
-    *length = pdu->frag_length;
+    #ifdef DEBUG_MSRPC_PDU_PARSER
+    printf("data representation: 0x%08x\n", (uint32_t)pdu->data_representation);
+    #endif
+    *length = MSRPC_PDU_IS_LITTLE_ENDIAN ? pdu->frag_length : swap_bytes_uint16_t(pdu->frag_length);
     return APR_SUCCESS;
 }
 
@@ -110,11 +115,13 @@ apr_status_t msrpc_pdu_validate(const char *buf, const char **error)
         if (error) *error = "PDU type";
         return APR_FROM_OS_ERROR(EBADMSG);
     }
-    if (pdu->data_representation != 16) {
+    if ((pdu->data_representation != MSRPC_PDU_DATA_REPRESENTATION_LITTLE_ENDIAN) &&
+        (pdu->data_representation != MSRPC_PDU_DATA_REPRESENTATION_BIG_ENDIAN)) {
         if (error) *error = "data representation";
         return APR_FROM_OS_ERROR(EBADMSG);
     }
-    if (pdu->frag_length % 4 != 0) {
+    uint16_t frag_length = MSRPC_PDU_IS_LITTLE_ENDIAN ? pdu->frag_length : swap_bytes_uint16_t(pdu->frag_length);
+    if (frag_length % 4 != 0) {
         if (error) *error = "unaligned length";
         return APR_FROM_OS_ERROR(EBADMSG);
     }
@@ -130,7 +137,7 @@ apr_status_t msrpc_pdu_get_rts_pdu_count(const char *buf, uint16_t *count)
     if (pdu->type != MSRPC_PDU_RTS) {
         return APR_FROM_OS_ERROR(EINVAL);
     }
-    *count = pdu->rts_pdu_count;
+    *count = MSRPC_PDU_IS_LITTLE_ENDIAN ? pdu->rts_pdu_count : swap_bytes_uint16_t(pdu->rts_pdu_count);
     return APR_SUCCESS;
 }
 

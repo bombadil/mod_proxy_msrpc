@@ -67,9 +67,11 @@ const static test_msrpc_pdu_validate_t testset_msrpc_pdu_validate[] = {
     { "\x06\x00\x14\x03\x10\x00\x00\x00\x0c\x00\x00\x00",     "PDU version",         APR_FROM_OS_ERROR(EBADMSG) },
     { "\x05\x01\x14\x03\x10\x00\x00\x00\x0c\x00\x00\x00",     "PDU minor version",   APR_FROM_OS_ERROR(EBADMSG) },
     { "\x05\x00\x15\x03\x10\x00\x00\x00\x0c\x00\x00\x00",     "PDU type",            APR_FROM_OS_ERROR(EBADMSG) },
-    { "\x05\x00\x14\x03\x00\x00\x00\x10\x0c\x00\x00\x00",     "data representation", APR_FROM_OS_ERROR(EBADMSG) },
+    { "\x05\x00\x14\x03\x01\x11\x11\x11\x0c\x00\x00\x00",     "data representation", APR_FROM_OS_ERROR(EBADMSG) },
     { "\x05\x00\x14\x03\x10\x00\x00\x00\x0d\x00\x00\x00\x00", "unaligned length",    APR_FROM_OS_ERROR(EBADMSG) },
     { "\x05\x00\x14\x03\x10\x00\x00\x00\x0c\x00\x00\x00",     NULL,                  APR_SUCCESS                },
+    // Caution: next is a synthetic test case, big endian data representation has not been seen in the wild:
+    { "\x05\x00\x14\x03\x00\x00\x00\x10\x00\x0c\x00\x00",     NULL,                  APR_SUCCESS                },
     { TESTDATA_INITIAL_PDU_IN,                                NULL,                  APR_SUCCESS                },
     { TESTDATA_INITIAL_PDU_OUT,                               NULL,                  APR_SUCCESS                },
 };
