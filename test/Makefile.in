@@ -13,7 +13,7 @@ check_msrpc_sync.o:       check_msrpc_sync.c ../src/msrpc_sync.h
 	gcc $(CFLAGS) -I../src -c -o check_msrpc_sync.o check_msrpc_sync.c
 
 msrpc_pdu_parser.o:	../src/msrpc_pdu_parser.c ../src/msrpc_pdu_parser.h ../src/msrpc_pdu_private.h
-	gcc $(CFLAGS) $(APR_CFLAGS) $(APR_LIBS) -I../src -c ../src/msrpc_pdu_parser.c
+	gcc $(CFLAGS) $(APR_CFLAGS) -I../src -c ../src/msrpc_pdu_parser.c
 
 msrpc_sync.o:   ../src/msrpc_sync.c ../src/msrpc_sync.h
 	gcc $(CFLAGS) -D_GNU_SOURCE -I../src -c ../src/msrpc_sync.c
