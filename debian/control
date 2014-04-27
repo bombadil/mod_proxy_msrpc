@@ -4,7 +4,7 @@ Priority: extra
 Maintainer: Micha Lenk <micha@debian.org>
 Build-Depends: debhelper (>= 8.0.0), pkg-config,
  apache2-dev (>= 2.4), uuid-dev,
- check
+ check, dh-autoreconf
 Standards-Version: 3.9.5
 Homepage: https://github.com/bombadil/mod_proxy_msrpc
 Vcs-Git: https://github.com/bombadil/mod_proxy_msrpc.git -b debian/unstable

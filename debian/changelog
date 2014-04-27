@@ -2,6 +2,9 @@ mod-proxy-msrpc (0.4-2) UNRELEASED; urgency=low
 
   * (NOT RELEASED YET) 
   * Don't let apxs hide the used build flags by setting LTFLAGS.
+  * Use autoreconf helper on newer arches to correctly build shared
+    library. Thanks to Daniel T Chen <crimsun@ubuntu.com> for providing the
+    patch via Ubuntu.
 
  -- Micha Lenk <micha@debian.org>  Sun, 23 Feb 2014 20:43:21 +0100
 

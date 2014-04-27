@@ -5,7 +5,7 @@
 LTFLAGS=--no-silent --verbose
 
 %:
-	dh $@ --with apache2
+	dh $@ --with apache2,autoreconf
 
 override_dh_auto_install:
 	# Intentionally skip dh_auto_install as we use the install mechanism provided by dh_apache2
