@@ -496,15 +496,35 @@ static int proxy_msrpc_send_request_headers(request_rec *r, char *url,
     /* send request headers */
     const apr_array_header_t *headers_in_array = apr_table_elts(r->headers_in);
     const apr_table_entry_t *headers_in = (const apr_table_entry_t *)headers_in_array->elts;
+    const char *client_auth = NULL;
     int i;
     for (i = 0; i < headers_in_array->nelts; i++) {
         if (!headers_in[i].key || !headers_in[i].val) {
             continue;
         }
 
+        if (!strcasecmp(headers_in[i].key, "Authorization")) {
+            client_auth = headers_in[i].val;
+        }
+
+        ap_log_rerror(APLOG_MARK, APLOG_TRACE3, 0, r,
+                      "%s: Sending HTTP request header line [%s: %s]", r->method, headers_in[i].key, headers_in[i].val);
+
         buf = apr_pstrcat(p, headers_in[i].key, ": ", headers_in[i].val, CRLF, NULL);
         b = apr_bucket_pool_create(buf, strlen(buf), p, bb->bucket_alloc);
         APR_BRIGADE_INSERT_TAIL(bb, b);
+    }
+
+    /* debug output for client authentication type */
+    if (client_auth) {
+        const char *auth_param = strchrnul(client_auth, ' ');
+        assert(auth_param > client_auth);
+        char *auth_type = apr_pstrndup(r->pool, client_auth, auth_param - client_auth);
+        ap_log_rerror(APLOG_MARK, APLOG_DEBUG, 0, r,
+                      "%s: client auth: %s", r->method, auth_type);
+    } else {
+        ap_log_rerror(APLOG_MARK, APLOG_DEBUG, 0, r,
+                      "%s: client auth: missing", r->method);
     }
 
     /* add empty line at the end of the headers */
@@ -899,6 +919,20 @@ static int proxy_msrpc_read_and_parse_initial_pdu(request_rec *r, proxy_msrpc_re
     return rv;
 }
 
+static char *proxy_msrpc_debug_auth_server(request_rec *r, const char *value, char *server_auth)
+{
+    const char *auth_param = strchrnul(value, ' ');
+    assert(auth_param > value);
+    char *auth_type = apr_pstrndup(r->pool, value, auth_param - value);
+    ap_log_rerror(APLOG_MARK, APLOG_TRACE1, 0, r,
+                  "%s: server auth offer: %s", r->method, auth_type);
+    if (server_auth == NULL) {
+        return auth_type;
+    }
+
+    return apr_pstrcat(r->pool, server_auth, ", ", auth_type, NULL);
+}
+
 static int proxy_msrpc_read_server_response(request_rec *r, proxy_conn_rec *backend, apr_bucket_brigade *bb)
 {
     apr_status_t rv;
@@ -934,7 +968,7 @@ static int proxy_msrpc_read_server_response(request_rec *r, proxy_conn_rec *back
 
     // check server response
     if (!apr_date_checkmask(buf, "HTTP/1.1 ###*")) {
-        ap_log_rerror(APLOG_MARK, APLOG_INFO, 0, r,
+        ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r,
                       "%s: bad response from server: [%.*s]", r->method, (int)buf_len, buf);
         return HTTP_BAD_GATEWAY;
     }
@@ -950,6 +984,7 @@ static int proxy_msrpc_read_server_response(request_rec *r, proxy_conn_rec *back
 
     apr_brigade_cleanup(bb);
     apr_table_clear(r->headers_out);
+    char *server_auth = NULL;
     int expecting_response_headers = 1;
     while (expecting_response_headers) {
         rv = ap_get_brigade(backend->connection->input_filters, bb,
@@ -990,6 +1025,9 @@ static int proxy_msrpc_read_server_response(request_rec *r, proxy_conn_rec *back
                 while (apr_isspace(*value))
                     value++;            /* Skip to start of value   */
                 apr_table_add(r->headers_out, buf, value);
+                if (!strcasecmp(buf, "WWW-Authenticate")) {
+                    server_auth = proxy_msrpc_debug_auth_server(r, value, server_auth);
+                }
             } else {
                 expecting_response_headers = 0;
             }
@@ -1001,6 +1039,10 @@ static int proxy_msrpc_read_server_response(request_rec *r, proxy_conn_rec *back
     }
     ap_log_rerror(APLOG_MARK, APLOG_TRACE3, 0, r,
                   "%s: Got all HTTP response headers from server", r->method);
+
+    /* debug output for authentication mechanisms provided by server */
+    ap_log_rerror(APLOG_MARK, APLOG_DEBUG, 0, r,
+                  "%s: server auth: %s", r->method, server_auth ? server_auth : "missing");
 
     /* parse some important response headers */
     apr_int64_t body_length = 0;
@@ -1017,8 +1059,8 @@ static int proxy_msrpc_read_server_response(request_rec *r, proxy_conn_rec *back
 
     if (backend_status_code != HTTP_OK) {
         ap_log_rerror(APLOG_MARK, APLOG_DEBUG, 0, r,
-                      "%s: server refused MSRPC request: [%s]",
-                      r->method, r->status_line);
+                      "%s: server refused MSRPC request for %s: [%s]",
+                      r->method, r->unparsed_uri, r->status_line);
     }
 
     /* forward response headers to client */
@@ -1316,7 +1358,7 @@ static int proxy_msrpc_handler(request_rec *r, proxy_worker *worker,
         return status;
     }
 
-    server_bb = apr_brigade_create(p, backend->connection->bucket_alloc);
+    server_bb = apr_brigade_create(backend->connection->pool, backend->connection->bucket_alloc);
     if (request_body_length == 0) {
         /* forward initial HTTP request without MSRPC payload */
         status = proxy_msrpc_send_request_headers(r, locurl, server_bb,
@@ -1337,8 +1379,8 @@ static int proxy_msrpc_handler(request_rec *r, proxy_worker *worker,
                       r->method, status);
         if (status != HTTP_UNAUTHORIZED) {
             ap_log_rerror(APLOG_MARK, APLOG_INFO, 0, r,
-                          "%s: proxy_msrpc_read_server_response() returned unexpected status code %d from %pI (%s)",
-                          r->method, status, worker->cp->addr, worker->s->hostname);
+                          "%s: server %pI (%s) did not accept request without PDU (HTTP status code %d)",
+                          r->method, worker->cp->addr, worker->s->hostname, status);
         }
 
         ap_log_rerror(APLOG_MARK, APLOG_TRACE2, 0, r,
@@ -1440,8 +1482,8 @@ static int proxy_msrpc_handler(request_rec *r, proxy_worker *worker,
                           r->method, status);
             if (status != HTTP_OK) {
                 ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r,
-                              "%s: proxy_msrpc_read_server_response() returned unexpected status code %d from %pI (%s)",
-                              r->method, status, worker->cp->addr, worker->s->hostname);
+                              "%s: server %pI (%s) did not accept initial PDU (HTTP status code %d)",
+                              r->method, worker->cp->addr, worker->s->hostname, status);
 
                 /* mark tunnel mode as failed */
                 proxy_msrpc_validate_outlook_session(r, rdata, SESSION_BROKEN);
