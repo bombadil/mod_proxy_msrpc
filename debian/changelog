@@ -1,6 +1,5 @@
-mod-proxy-msrpc (0.5-1) UNRELEASED; urgency=medium
+mod-proxy-msrpc (0.5-1) unstable; urgency=medium
 
-  * (NOT RELEASED YET) 
   * New upstream version
   * Don't let apxs hide the used build flags by setting LTFLAGS.
   * Use autoreconf helper on newer arches to correctly build shared
