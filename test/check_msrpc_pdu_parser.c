@@ -92,7 +92,7 @@ const static size_t testset_msrpc_pdu_get_rts_pdu_count_size = sizeof(testset_ms
 
 typedef struct {
     const char *data;
-    apr_size_t expected_size;
+    unsigned int expected_size;
 } test_msrpc_rts_pdu_len_t;
 
 const static test_msrpc_rts_pdu_len_t testset_msrpc_rts_pdu_len[] = {
@@ -126,7 +126,7 @@ typedef struct {
     int output_buffer_length;
     apr_status_t expected_rv;
     const char *expected_data;
-    apr_size_t expected_length;
+    unsigned int expected_length;
 } test_msrpc_pdu_get_rts_pdu_t;
 
 const static test_msrpc_pdu_get_rts_pdu_t testset_msrpc_pdu_get_rts_pdu[] = {
@@ -169,7 +169,7 @@ const static size_t testset_msrpc_pdu_get_name_size = sizeof(testset_msrpc_pdu_g
 
 typedef struct {
     const char *data;
-    apr_size_t rts_command_count;
+    unsigned int rts_command_count;
     const char *name[7];
 } test_msrpc_rts_pdu_get_command_name_t;
 
@@ -258,7 +258,7 @@ START_TEST (test_msrpc_pdu_get_rts_pdu)
 {
     const test_msrpc_pdu_get_rts_pdu_t *testset = &testset_msrpc_pdu_get_rts_pdu[_i];
     msrpc_rts_pdu_t *rtspdu = NULL;
-    apr_size_t rtspdulen = 0;
+    unsigned int rtspdulen = 0;
 
     apr_status_t rv = msrpc_pdu_get_rts_pdu(testset->data, testset->offset, &rtspdu, &rtspdulen);
     fail_unless(testset->expected_rv == rv, " for iteration %u\n"
@@ -307,9 +307,9 @@ END_TEST
 START_TEST (test_msrpc_rts_pdu_get_command_name)
 {
     const char *pdu  = testset_msrpc_rts_pdu_get_command_name[_i].data;
-    apr_size_t expected_command_count = testset_msrpc_rts_pdu_get_command_name[_i].rts_command_count;
+    unsigned int expected_command_count = testset_msrpc_rts_pdu_get_command_name[_i].rts_command_count;
     msrpc_rts_pdu_t *rtspdu = NULL;
-    apr_size_t i, rtspdulen;
+    unsigned int i, rtspdulen;
     unsigned int offset = 0;
     apr_status_t rv;
 

@@ -30,8 +30,8 @@ typedef struct msrpc_rts_pdu msrpc_rts_pdu_t;
 apr_status_t msrpc_pdu_get_length(const char *buf, apr_size_t *length);
 apr_status_t msrpc_pdu_validate(const char *buf, const char **error);
 apr_status_t msrpc_pdu_get_rts_pdu_count(const char *buf, uint16_t *count);
-apr_size_t msrpc_rts_pdu_len(const msrpc_rts_pdu_t *pdu);
-apr_status_t msrpc_pdu_get_rts_pdu(const char *buf, unsigned int offset, msrpc_rts_pdu_t **rts_pdu, apr_size_t *len);
+unsigned int msrpc_rts_pdu_len(const msrpc_rts_pdu_t *pdu);
+apr_status_t msrpc_pdu_get_rts_pdu(const char *buf, unsigned int offset, msrpc_rts_pdu_t **rts_pdu, unsigned int *len);
 const char *msrpc_pdu_get_name(const char *buf);
 const char *msrpc_rts_pdu_get_command_name(msrpc_rts_pdu_t *pdu);
 

@@ -141,7 +141,7 @@ apr_status_t msrpc_pdu_get_rts_pdu_count(const char *buf, uint16_t *count)
     return APR_SUCCESS;
 }
 
-apr_size_t msrpc_rts_pdu_len(const msrpc_rts_pdu_t *pdu)
+unsigned int msrpc_rts_pdu_len(const msrpc_rts_pdu_t *pdu)
 {
     apr_size_t size = 0;
     uint32_t conformance_count;
@@ -201,7 +201,7 @@ apr_size_t msrpc_rts_pdu_len(const msrpc_rts_pdu_t *pdu)
     return size;
 }
 
-apr_status_t msrpc_pdu_get_rts_pdu(const char *buf, unsigned int offset, msrpc_rts_pdu_t **rts_pdu, apr_size_t *len)
+apr_status_t msrpc_pdu_get_rts_pdu(const char *buf, unsigned int offset, msrpc_rts_pdu_t **rts_pdu, unsigned int *len)
 {
     assert(buf != NULL);
     assert(rts_pdu != NULL);
@@ -219,7 +219,7 @@ apr_status_t msrpc_pdu_get_rts_pdu(const char *buf, unsigned int offset, msrpc_r
         #endif
         return APR_FROM_OS_ERROR(EINVAL);
     }
-    apr_size_t pdusize = msrpc_rts_pdu_len((msrpc_rts_pdu_t *)(pdu->rts_pdu_buf + offset));
+    unsigned int pdusize = msrpc_rts_pdu_len((msrpc_rts_pdu_t *)(pdu->rts_pdu_buf + offset));
     if (pdusize == 0) {
         #ifdef DEBUG_MSRPC_PDU_PARSER
         printf("failed to parse RTS PDU\n");
@@ -280,8 +280,8 @@ apr_status_t msrpc_rts_get_virtual_channel_cookie(const char *buf, uuid_t **cook
 
     unsigned int offset = 0;
     msrpc_rts_pdu_t *rtspdu = NULL;
-    apr_size_t rtspdulen = 0;
-    apr_size_t rv = msrpc_pdu_get_rts_pdu(buf, offset, &rtspdu, &rtspdulen);
+    unsigned int rtspdulen = 0;
+    apr_status_t rv = msrpc_pdu_get_rts_pdu(buf, offset, &rtspdu, &rtspdulen);
     if (rv != APR_SUCCESS) {
         if (error) *error = "failed to get first RTS command";
         return rv;
