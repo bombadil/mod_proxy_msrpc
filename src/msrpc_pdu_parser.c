@@ -141,14 +141,20 @@ apr_status_t msrpc_pdu_get_rts_pdu_count(const char *buf, uint16_t *count)
     return APR_SUCCESS;
 }
 
-unsigned int msrpc_rts_pdu_len(const msrpc_rts_pdu_t *pdu)
+unsigned int msrpc_rts_pdu_len(const msrpc_rts_pdu_t *pdu, uint32_t data_representation)
 {
     apr_size_t size = 0;
     uint32_t conformance_count;
     uint32_t addrtype;
+    uint32_t command;
 
     assert(pdu != NULL);
-    switch (pdu->command) {
+    command = (data_representation == MSRPC_PDU_DATA_REPRESENTATION_LITTLE_ENDIAN) ? pdu->command : swap_bytes_uint32_t(pdu->command);
+    #ifdef DEBUG_MSRPC_PDU_PARSER
+    printf("msrpc_rts_pdu_len: data representation: 0x%08x, command: 0x%08x\n", data_representation, command);
+    #endif
+
+    switch (command) {
         case RTS_CMD_RECEIVE_WINDOW_SIZE:
         case RTS_CMD_CONNECTION_TIMEOUT:
         case RTS_CMD_CHANNEL_LIFETIME:
@@ -174,14 +180,22 @@ unsigned int msrpc_rts_pdu_len(const msrpc_rts_pdu_t *pdu)
             break;
         case RTS_CMD_PADDING:
             // see http://msdn.microsoft.com/en-us/library/cc244015.aspx
-            conformance_count = pdu->u32[0];
+            if (data_representation == MSRPC_PDU_DATA_REPRESENTATION_LITTLE_ENDIAN) {
+                conformance_count = pdu->u32[0];
+            } else {
+                conformance_count = swap_bytes_uint32_t(pdu->u32[0]);
+            }
             size = sizeof(pdu->command) + sizeof(conformance_count)
                                         + conformance_count;
             break;
         case RTS_CMD_CLIENT_ADDRESS:
             // see http://msdn.microsoft.com/en-us/library/cc244004.aspx
             // and http://msdn.microsoft.com/en-us/library/cc243993.aspx
-            addrtype = pdu->u32[0];
+            if (data_representation == MSRPC_PDU_DATA_REPRESENTATION_LITTLE_ENDIAN) {
+                addrtype = pdu->u32[0];
+            } else {
+                addrtype = swap_bytes_uint32_t(pdu->u32[0]);
+            }
             size = sizeof(pdu->command) + sizeof(addrtype);
             switch (addrtype) {
                 case RTS_IPV4:
@@ -219,7 +233,7 @@ apr_status_t msrpc_pdu_get_rts_pdu(const char *buf, unsigned int offset, msrpc_r
         #endif
         return APR_FROM_OS_ERROR(EINVAL);
     }
-    unsigned int pdusize = msrpc_rts_pdu_len((msrpc_rts_pdu_t *)(pdu->rts_pdu_buf + offset));
+    unsigned int pdusize = msrpc_rts_pdu_len((msrpc_rts_pdu_t *)(pdu->rts_pdu_buf + offset), pdu->data_representation);
     if (pdusize == 0) {
         #ifdef DEBUG_MSRPC_PDU_PARSER
         printf("failed to parse RTS PDU\n");

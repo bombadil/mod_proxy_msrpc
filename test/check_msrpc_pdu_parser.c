@@ -91,32 +91,33 @@ const static test_msrpc_pdu_get_rts_pdu_count_t testset_msrpc_pdu_get_rts_pdu_co
 const static size_t testset_msrpc_pdu_get_rts_pdu_count_size = sizeof(testset_msrpc_pdu_get_rts_pdu_count) / sizeof(test_msrpc_pdu_get_rts_pdu_count_t);
 
 typedef struct {
+    const char data_representation[4];
     const char *data;
     unsigned int expected_size;
 } test_msrpc_rts_pdu_len_t;
 
 const static test_msrpc_rts_pdu_len_t testset_msrpc_rts_pdu_len[] = {
-    { "\x00\x00\x00\x00",  8 },
-    { "\x01\x00\x00\x00", 28 },
-    { "\x02\x00\x00\x00",  8 },
-    { "\x03\x00\x00\x00", 20 },
-    { "\x04\x00\x00\x00",  8 },
-    { "\x05\x00\x00\x00",  8 },
-    { "\x06\x00\x00\x00",  8 },
-    { "\x07\x00\x00\x00",  4 },
-    { "\x08\x00\x00\x00\x00\x00\x00\x00",  8 },
-    { "\x08\x00\x00\x00\x01\x00\x00\x00",  9 },
+    { "\x10\x00\x00\x00", "\x00\x00\x00\x00",  8 },
+    { "\x10\x00\x00\x00", "\x01\x00\x00\x00", 28 },
+    { "\x10\x00\x00\x00", "\x02\x00\x00\x00",  8 },
+    { "\x10\x00\x00\x00", "\x03\x00\x00\x00", 20 },
+    { "\x10\x00\x00\x00", "\x04\x00\x00\x00",  8 },
+    { "\x10\x00\x00\x00", "\x05\x00\x00\x00",  8 },
+    { "\x10\x00\x00\x00", "\x06\x00\x00\x00",  8 },
+    { "\x10\x00\x00\x00", "\x07\x00\x00\x00",  4 },
+    { "\x10\x00\x00\x00", "\x08\x00\x00\x00\x00\x00\x00\x00",  8 },
+    { "\x10\x00\x00\x00", "\x08\x00\x00\x00\x01\x00\x00\x00",  9 },
     // checking whether all the bits from padding count are evaluated correctly:
-    { "\x08\x00\x00\x00\x01\x02\x03\x04",  8 + 0x04030201 },
-    { "\x09\x00\x00\x00",  4 },
-    { "\x0a\x00\x00\x00",  4 },
-    { "\x0b\x00\x00\x00\x00\x00\x00\x00",  8 +  4 + 12 },    // IPv4 address
-    { "\x0b\x00\x00\x00\x01\x00\x00\x00",  8 + 16 + 12 },    // IPv6 address
-    { "\x0b\x00\x00\x00\x03\x00\x00\x00",  0 },    // neither IPv4 nor IPv6 address
-    { "\x0c\x00\x00\x00", 20 },
-    { "\x0d\x00\x00\x00",  8 },
-    { "\x0e\x00\x00\x00",  8 },
-    { "\x0f\x00\x00\x00",  0 },
+    { "\x10\x00\x00\x00", "\x08\x00\x00\x00\x01\x02\x03\x04",  8 + 0x04030201 },
+    { "\x10\x00\x00\x00", "\x09\x00\x00\x00",  4 },
+    { "\x10\x00\x00\x00", "\x0a\x00\x00\x00",  4 },
+    { "\x10\x00\x00\x00", "\x0b\x00\x00\x00\x00\x00\x00\x00",  8 +  4 + 12 },    // IPv4 address
+    { "\x10\x00\x00\x00", "\x0b\x00\x00\x00\x01\x00\x00\x00",  8 + 16 + 12 },    // IPv6 address
+    { "\x10\x00\x00\x00", "\x0b\x00\x00\x00\x03\x00\x00\x00",  0 },    // neither IPv4 nor IPv6 address
+    { "\x10\x00\x00\x00", "\x0c\x00\x00\x00", 20 },
+    { "\x10\x00\x00\x00", "\x0d\x00\x00\x00",  8 },
+    { "\x10\x00\x00\x00", "\x0e\x00\x00\x00",  8 },
+    { "\x10\x00\x00\x00", "\x0f\x00\x00\x00",  0 },
 };
 const static size_t testset_msrpc_rts_pdu_len_size = sizeof(testset_msrpc_rts_pdu_len) / sizeof(test_msrpc_rts_pdu_len_t);
 
@@ -245,10 +246,11 @@ END_TEST
 
 START_TEST (test_msrpc_rts_pdu_len)
 {
+    uint32_t data_representation = *((uint32_t *)(testset_msrpc_rts_pdu_len[_i].data_representation));
     const msrpc_rts_pdu_t *pdu = (const msrpc_rts_pdu_t *)testset_msrpc_rts_pdu_len[_i].data;
     apr_size_t expected_size = testset_msrpc_rts_pdu_len[_i].expected_size;
 
-    apr_size_t size = msrpc_rts_pdu_len(pdu);
+    apr_size_t size = msrpc_rts_pdu_len(pdu, data_representation);
     fail_unless(size == expected_size, " for iteration %u\n"
                 "EXPECTED size: %lu, BUT GOT size: %lu", _i, expected_size, size);
 }
