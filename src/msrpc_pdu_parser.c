@@ -221,13 +221,14 @@ apr_status_t msrpc_pdu_get_rts_pdu(const char *buf, unsigned int offset, msrpc_r
     assert(rts_pdu != NULL);
 
     msrpc_pdu_t *pdu = (msrpc_pdu_t *)buf;
+    uint16_t frag_length = MSRPC_PDU_IS_LITTLE_ENDIAN ? pdu->frag_length : swap_bytes_uint16_t(pdu->frag_length);
     if (pdu->type != MSRPC_PDU_RTS) {
         #ifdef DEBUG_MSRPC_PDU_PARSER
         printf("No RTS PDU\n");
         #endif
         return APR_FROM_OS_ERROR(EINVAL);
     }
-    if (offsetof(msrpc_pdu_t, rts_pdu_buf) + offset >= pdu->frag_length) {
+    if (offsetof(msrpc_pdu_t, rts_pdu_buf) + offset >= frag_length) {
         #ifdef DEBUG_MSRPC_PDU_PARSER
         printf("Frag length shorter than offset\n");
         #endif
@@ -240,7 +241,7 @@ apr_status_t msrpc_pdu_get_rts_pdu(const char *buf, unsigned int offset, msrpc_r
         #endif
         return APR_FROM_OS_ERROR(EBADMSG);
     }
-    if (offsetof(msrpc_pdu_t, rts_pdu_buf) + offset + pdusize > pdu->frag_length) {
+    if (offsetof(msrpc_pdu_t, rts_pdu_buf) + offset + pdusize > frag_length) {
         #ifdef DEBUG_MSRPC_PDU_PARSER
         printf("RTS PDU length doesn't fit into frag length at the given offset\n");
         #endif
