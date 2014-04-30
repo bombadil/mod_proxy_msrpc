@@ -309,6 +309,7 @@ END_TEST
 START_TEST (test_msrpc_rts_pdu_get_command_name)
 {
     const char *pdu  = testset_msrpc_rts_pdu_get_command_name[_i].data;
+    uint32_t data_representation = ((msrpc_pdu_t *)pdu)->data_representation;
     unsigned int expected_command_count = testset_msrpc_rts_pdu_get_command_name[_i].rts_command_count;
     msrpc_rts_pdu_t *rtspdu = NULL;
     unsigned int i, rtspdulen;
@@ -319,7 +320,7 @@ START_TEST (test_msrpc_rts_pdu_get_command_name)
         rv = msrpc_pdu_get_rts_pdu(pdu, offset, &rtspdu, &rtspdulen);
         fail_unless(rv == APR_SUCCESS, " for iteration %u\n"
                     "EXPECTED rv 0, BUT GOT rv %u", _i, rv);
-        const char *name = msrpc_rts_pdu_get_command_name(rtspdu);
+        const char *name = msrpc_rts_pdu_get_command_name(rtspdu, data_representation);
         const char *expected_name = testset_msrpc_rts_pdu_get_command_name[_i].name[i];
         if (name) {
             if (!expected_name) {

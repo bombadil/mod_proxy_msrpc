@@ -262,11 +262,14 @@ const char *msrpc_pdu_get_name(const char *buf)
     return NULL;
 }
 
-const char *msrpc_rts_pdu_get_command_name(msrpc_rts_pdu_t *pdu)
+const char *msrpc_rts_pdu_get_command_name(msrpc_rts_pdu_t *pdu, uint32_t data_representation)
 {
+    uint32_t command;
+
     assert(pdu);
-    if (pdu->command <= RTS_CMD_PING_TRAFFIC_SENT_NOTIFY) {
-        return msrpc_rts_pdu_command_name[pdu->command];
+    command = (data_representation == MSRPC_PDU_DATA_REPRESENTATION_LITTLE_ENDIAN) ? pdu->command : swap_bytes_uint32_t(pdu->command);
+    if (command <= RTS_CMD_PING_TRAFFIC_SENT_NOTIFY) {
+        return msrpc_rts_pdu_command_name[command];
     }
     return NULL;
 }

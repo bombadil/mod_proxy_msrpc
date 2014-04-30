@@ -33,7 +33,7 @@ apr_status_t msrpc_pdu_get_rts_pdu_count(const char *buf, uint16_t *count);
 unsigned int msrpc_rts_pdu_len(const msrpc_rts_pdu_t *pdu, uint32_t data_representation);
 apr_status_t msrpc_pdu_get_rts_pdu(const char *buf, unsigned int offset, msrpc_rts_pdu_t **rts_pdu, unsigned int *len);
 const char *msrpc_pdu_get_name(const char *buf);
-const char *msrpc_rts_pdu_get_command_name(msrpc_rts_pdu_t *pdu);
+const char *msrpc_rts_pdu_get_command_name(msrpc_rts_pdu_t *pdu, uint32_t data_representation);
 
 apr_status_t msrpc_rts_get_virtual_channel_cookie(const char *buf, uuid_t **cookie, const char **error);
 
