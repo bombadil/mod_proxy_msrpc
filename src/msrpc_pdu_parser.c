@@ -276,10 +276,13 @@ const char *msrpc_rts_pdu_get_command_name(msrpc_rts_pdu_t *pdu, uint32_t data_r
 
 apr_status_t msrpc_rts_get_virtual_channel_cookie(const char *buf, uuid_t **cookie, const char **error)
 {
+    msrpc_pdu_t *pdu = (msrpc_pdu_t *)buf;
+    uint16_t rts_pdu_count;
+    apr_status_t rv;
+
     assert(buf);
     assert(cookie);
 
-    msrpc_pdu_t *pdu = (msrpc_pdu_t *)buf;
     if (pdu->type != MSRPC_PDU_RTS) {
         if (error) *error = "not a RTS pdu";
         return APR_FROM_OS_ERROR(EINVAL);
@@ -290,8 +293,14 @@ apr_status_t msrpc_rts_get_virtual_channel_cookie(const char *buf, uuid_t **cook
         return APR_FROM_OS_ERROR(EBADMSG);
     }
 
-    if ((pdu->rts_pdu_count != 4) &&
-        (pdu->rts_pdu_count != 6)) {
+    rv = msrpc_pdu_get_rts_pdu_count(buf, &rts_pdu_count);
+    if (rv != APR_SUCCESS) {
+        if (error) *error = "unexpected error from msrpc_pdu_get_rts_pdu_count()";
+        return rv;
+    }
+
+    if ((rts_pdu_count != 4) &&
+        (rts_pdu_count != 6)) {
         if (error) *error = "unexpected RTS command count";
         return APR_FROM_OS_ERROR(EBADMSG);
     }
@@ -299,13 +308,15 @@ apr_status_t msrpc_rts_get_virtual_channel_cookie(const char *buf, uuid_t **cook
     unsigned int offset = 0;
     msrpc_rts_pdu_t *rtspdu = NULL;
     unsigned int rtspdulen = 0;
-    apr_status_t rv = msrpc_pdu_get_rts_pdu(buf, offset, &rtspdu, &rtspdulen);
+    rv = msrpc_pdu_get_rts_pdu(buf, offset, &rtspdu, &rtspdulen);
     if (rv != APR_SUCCESS) {
         if (error) *error = "failed to get first RTS command";
         return rv;
     }
-    if ((rtspdu->command != RTS_CMD_VERSION) &&
-        (rtspdu->u32[0] != 1)) {
+    uint32_t command = MSRPC_PDU_IS_LITTLE_ENDIAN ? rtspdu->command : swap_bytes_uint32_t(rtspdu->command);
+    uint32_t rts_version = MSRPC_PDU_IS_LITTLE_ENDIAN ? rtspdu->u32[0] : swap_bytes_uint32_t(rtspdu->u32[0]);
+    if ((command != RTS_CMD_VERSION) &&
+        (rts_version != 1)) {
         if (error) *error = "unexpected first RTS command or RTS version";
         return APR_FROM_OS_ERROR(EBADMSG);
     }
@@ -316,7 +327,8 @@ apr_status_t msrpc_rts_get_virtual_channel_cookie(const char *buf, uuid_t **cook
         if (error) *error = "failed to get second RTS command";
         return rv;
     }
-    if (rtspdu->command != RTS_CMD_COOKIE) {
+    command = MSRPC_PDU_IS_LITTLE_ENDIAN ? rtspdu->command : swap_bytes_uint32_t(rtspdu->command);
+    if (command != RTS_CMD_COOKIE) {
         if (error) *error = "unexpected second RTS command";
         return APR_FROM_OS_ERROR(EBADMSG);
     }
