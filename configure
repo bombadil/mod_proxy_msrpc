@@ -4169,7 +4169,7 @@ test $ac_cv_func_memcmp_working = no && case " $LIBOBJS " in
 esac
 
 
-for ac_func in strcasecmp strchr strrchr
+for ac_func in strcasecmp strchr strrchr inotify_init1
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"

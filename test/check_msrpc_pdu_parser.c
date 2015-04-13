@@ -67,9 +67,11 @@ const static test_msrpc_pdu_validate_t testset_msrpc_pdu_validate[] = {
     { "\x06\x00\x14\x03\x10\x00\x00\x00\x0c\x00\x00\x00",     "PDU version",         APR_FROM_OS_ERROR(EBADMSG) },
     { "\x05\x01\x14\x03\x10\x00\x00\x00\x0c\x00\x00\x00",     "PDU minor version",   APR_FROM_OS_ERROR(EBADMSG) },
     { "\x05\x00\x15\x03\x10\x00\x00\x00\x0c\x00\x00\x00",     "PDU type",            APR_FROM_OS_ERROR(EBADMSG) },
-    { "\x05\x00\x14\x03\x00\x00\x00\x10\x0c\x00\x00\x00",     "data representation", APR_FROM_OS_ERROR(EBADMSG) },
+    { "\x05\x00\x14\x03\x01\x11\x11\x11\x0c\x00\x00\x00",     "data representation", APR_FROM_OS_ERROR(EBADMSG) },
     { "\x05\x00\x14\x03\x10\x00\x00\x00\x0d\x00\x00\x00\x00", "unaligned length",    APR_FROM_OS_ERROR(EBADMSG) },
     { "\x05\x00\x14\x03\x10\x00\x00\x00\x0c\x00\x00\x00",     NULL,                  APR_SUCCESS                },
+    // Caution: next is a synthetic test case, big endian data representation has not been seen in the wild:
+    { "\x05\x00\x14\x03\x00\x00\x00\x10\x00\x0c\x00\x00",     NULL,                  APR_SUCCESS                },
     { TESTDATA_INITIAL_PDU_IN,                                NULL,                  APR_SUCCESS                },
     { TESTDATA_INITIAL_PDU_OUT,                               NULL,                  APR_SUCCESS                },
 };
@@ -89,32 +91,33 @@ const static test_msrpc_pdu_get_rts_pdu_count_t testset_msrpc_pdu_get_rts_pdu_co
 const static size_t testset_msrpc_pdu_get_rts_pdu_count_size = sizeof(testset_msrpc_pdu_get_rts_pdu_count) / sizeof(test_msrpc_pdu_get_rts_pdu_count_t);
 
 typedef struct {
+    const char data_representation[4];
     const char *data;
-    apr_size_t expected_size;
+    unsigned int expected_size;
 } test_msrpc_rts_pdu_len_t;
 
 const static test_msrpc_rts_pdu_len_t testset_msrpc_rts_pdu_len[] = {
-    { "\x00\x00\x00\x00",  8 },
-    { "\x01\x00\x00\x00", 28 },
-    { "\x02\x00\x00\x00",  8 },
-    { "\x03\x00\x00\x00", 20 },
-    { "\x04\x00\x00\x00",  8 },
-    { "\x05\x00\x00\x00",  8 },
-    { "\x06\x00\x00\x00",  8 },
-    { "\x07\x00\x00\x00",  4 },
-    { "\x08\x00\x00\x00\x00\x00\x00\x00",  8 },
-    { "\x08\x00\x00\x00\x01\x00\x00\x00",  9 },
+    { "\x10\x00\x00\x00", "\x00\x00\x00\x00",  8 },
+    { "\x10\x00\x00\x00", "\x01\x00\x00\x00", 28 },
+    { "\x10\x00\x00\x00", "\x02\x00\x00\x00",  8 },
+    { "\x10\x00\x00\x00", "\x03\x00\x00\x00", 20 },
+    { "\x10\x00\x00\x00", "\x04\x00\x00\x00",  8 },
+    { "\x10\x00\x00\x00", "\x05\x00\x00\x00",  8 },
+    { "\x10\x00\x00\x00", "\x06\x00\x00\x00",  8 },
+    { "\x10\x00\x00\x00", "\x07\x00\x00\x00",  4 },
+    { "\x10\x00\x00\x00", "\x08\x00\x00\x00\x00\x00\x00\x00",  8 },
+    { "\x10\x00\x00\x00", "\x08\x00\x00\x00\x01\x00\x00\x00",  9 },
     // checking whether all the bits from padding count are evaluated correctly:
-    { "\x08\x00\x00\x00\x01\x02\x03\x04",  8 + 0x04030201 },
-    { "\x09\x00\x00\x00",  4 },
-    { "\x0a\x00\x00\x00",  4 },
-    { "\x0b\x00\x00\x00\x00\x00\x00\x00",  8 +  4 + 12 },    // IPv4 address
-    { "\x0b\x00\x00\x00\x01\x00\x00\x00",  8 + 16 + 12 },    // IPv6 address
-    { "\x0b\x00\x00\x00\x03\x00\x00\x00",  0 },    // neither IPv4 nor IPv6 address
-    { "\x0c\x00\x00\x00", 20 },
-    { "\x0d\x00\x00\x00",  8 },
-    { "\x0e\x00\x00\x00",  8 },
-    { "\x0f\x00\x00\x00",  0 },
+    { "\x10\x00\x00\x00", "\x08\x00\x00\x00\x01\x02\x03\x04",  8 + 0x04030201 },
+    { "\x10\x00\x00\x00", "\x09\x00\x00\x00",  4 },
+    { "\x10\x00\x00\x00", "\x0a\x00\x00\x00",  4 },
+    { "\x10\x00\x00\x00", "\x0b\x00\x00\x00\x00\x00\x00\x00",  8 +  4 + 12 },    // IPv4 address
+    { "\x10\x00\x00\x00", "\x0b\x00\x00\x00\x01\x00\x00\x00",  8 + 16 + 12 },    // IPv6 address
+    { "\x10\x00\x00\x00", "\x0b\x00\x00\x00\x03\x00\x00\x00",  0 },    // neither IPv4 nor IPv6 address
+    { "\x10\x00\x00\x00", "\x0c\x00\x00\x00", 20 },
+    { "\x10\x00\x00\x00", "\x0d\x00\x00\x00",  8 },
+    { "\x10\x00\x00\x00", "\x0e\x00\x00\x00",  8 },
+    { "\x10\x00\x00\x00", "\x0f\x00\x00\x00",  0 },
 };
 const static size_t testset_msrpc_rts_pdu_len_size = sizeof(testset_msrpc_rts_pdu_len) / sizeof(test_msrpc_rts_pdu_len_t);
 
@@ -124,7 +127,7 @@ typedef struct {
     int output_buffer_length;
     apr_status_t expected_rv;
     const char *expected_data;
-    apr_size_t expected_length;
+    unsigned int expected_length;
 } test_msrpc_pdu_get_rts_pdu_t;
 
 const static test_msrpc_pdu_get_rts_pdu_t testset_msrpc_pdu_get_rts_pdu[] = {
@@ -167,7 +170,7 @@ const static size_t testset_msrpc_pdu_get_name_size = sizeof(testset_msrpc_pdu_g
 
 typedef struct {
     const char *data;
-    apr_size_t rts_command_count;
+    unsigned int rts_command_count;
     const char *name[7];
 } test_msrpc_rts_pdu_get_command_name_t;
 
@@ -243,10 +246,11 @@ END_TEST
 
 START_TEST (test_msrpc_rts_pdu_len)
 {
+    uint32_t data_representation = *((uint32_t *)(testset_msrpc_rts_pdu_len[_i].data_representation));
     const msrpc_rts_pdu_t *pdu = (const msrpc_rts_pdu_t *)testset_msrpc_rts_pdu_len[_i].data;
     apr_size_t expected_size = testset_msrpc_rts_pdu_len[_i].expected_size;
 
-    apr_size_t size = msrpc_rts_pdu_len(pdu);
+    apr_size_t size = msrpc_rts_pdu_len(pdu, data_representation);
     fail_unless(size == expected_size, " for iteration %u\n"
                 "EXPECTED size: %lu, BUT GOT size: %lu", _i, expected_size, size);
 }
@@ -256,7 +260,7 @@ START_TEST (test_msrpc_pdu_get_rts_pdu)
 {
     const test_msrpc_pdu_get_rts_pdu_t *testset = &testset_msrpc_pdu_get_rts_pdu[_i];
     msrpc_rts_pdu_t *rtspdu = NULL;
-    apr_size_t rtspdulen = 0;
+    unsigned int rtspdulen = 0;
 
     apr_status_t rv = msrpc_pdu_get_rts_pdu(testset->data, testset->offset, &rtspdu, &rtspdulen);
     fail_unless(testset->expected_rv == rv, " for iteration %u\n"
@@ -305,9 +309,10 @@ END_TEST
 START_TEST (test_msrpc_rts_pdu_get_command_name)
 {
     const char *pdu  = testset_msrpc_rts_pdu_get_command_name[_i].data;
-    apr_size_t expected_command_count = testset_msrpc_rts_pdu_get_command_name[_i].rts_command_count;
+    uint32_t data_representation = ((msrpc_pdu_t *)pdu)->data_representation;
+    unsigned int expected_command_count = testset_msrpc_rts_pdu_get_command_name[_i].rts_command_count;
     msrpc_rts_pdu_t *rtspdu = NULL;
-    apr_size_t i, rtspdulen;
+    unsigned int i, rtspdulen;
     unsigned int offset = 0;
     apr_status_t rv;
 
@@ -315,7 +320,7 @@ START_TEST (test_msrpc_rts_pdu_get_command_name)
         rv = msrpc_pdu_get_rts_pdu(pdu, offset, &rtspdu, &rtspdulen);
         fail_unless(rv == APR_SUCCESS, " for iteration %u\n"
                     "EXPECTED rv 0, BUT GOT rv %u", _i, rv);
-        const char *name = msrpc_rts_pdu_get_command_name(rtspdu);
+        const char *name = msrpc_rts_pdu_get_command_name(rtspdu, data_representation);
         const char *expected_name = testset_msrpc_rts_pdu_get_command_name[_i].name[i];
         if (name) {
             if (!expected_name) {

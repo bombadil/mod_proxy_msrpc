@@ -1,3 +1,10 @@
+mod-proxy-msrpc (0.6-1) UNRELEASED; urgency=medium
+
+  * New upstream version.
+  * Drop patch upstream-big-endian-patch.diff (included upstream).
+
+ -- Micha Lenk <micha@debian.org>  Mon, 13 Apr 2015 17:27:54 +0200
+
 mod-proxy-msrpc (0.5-2) experimental; urgency=medium
 
   * Upload to experimental because I don't know whether this change will

@@ -38,7 +38,7 @@ AC_TYPE_UINT32_T
 
 # Checks for library functions.
 AC_FUNC_MEMCMP
-AC_CHECK_FUNCS([strcasecmp strchr strrchr])
+AC_CHECK_FUNCS([strcasecmp strchr strrchr inotify_init1])
 AC_CHECK_LIB([uuid], [uuid_unparse], [UUIDLIB=-luuid], AC_MSG_ERROR([could not find libuuid]))
 AC_SUBST([UUIDLIB])
 
