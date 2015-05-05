@@ -1,21 +1,10 @@
 mod-proxy-msrpc (0.6-1) UNRELEASED; urgency=medium
 
-  * New upstream version.
-  * Drop patch upstream-big-endian-patch.diff (included upstream).
-
- -- Micha Lenk <micha@debian.org>  Mon, 13 Apr 2015 17:27:54 +0200
-
-mod-proxy-msrpc (0.5-2) experimental; urgency=medium
-
-  * Upload to experimental because I don't know whether this change will
-    get a freeze exception for Debian Jessie.
-  * Add patch upstream-big-endian-patch.diff to fix build on big endian
-    architectures (closes: #774285). This essentially updates the source to
-    upstream Git commit 03ed564ee88b1a35e830c4f141e178125010c265 (all changes
-    since the release 0.5 were only related to big-endian support).
+  * New upstream version, fixes build on big endian architectures
+    (closes: #774285).
   * Package is compliant to Debian Policy 3.9.6 (no changes needed).
 
- -- Micha Lenk <micha@debian.org>  Wed, 07 Jan 2015 22:48:39 +0100
+ -- Micha Lenk <micha@debian.org>  Mon, 13 Apr 2015 17:27:54 +0200
 
 mod-proxy-msrpc (0.5-1) unstable; urgency=medium
 
