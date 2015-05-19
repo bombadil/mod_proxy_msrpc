@@ -1,0 +1,3 @@
+Tests: ordinary-http-request reverse-proxy-request save-logs
+Restrictions: needs-root
+Depends: apache2, httest, @

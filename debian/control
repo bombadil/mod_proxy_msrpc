@@ -9,6 +9,7 @@ Standards-Version: 3.9.6
 Homepage: https://github.com/bombadil/mod_proxy_msrpc
 Vcs-Git: https://github.com/bombadil/mod_proxy_msrpc.git -b debian/unstable
 Vcs-Browser: https://github.com/bombadil/mod_proxy_msrpc/tree/debian/unstable
+Testsuite: autopkgtest
 
 Package: libapache2-mod-proxy-msrpc
 Architecture: any

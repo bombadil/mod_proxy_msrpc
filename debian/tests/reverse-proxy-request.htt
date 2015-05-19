@@ -1,0 +1,20 @@
+CLIENT
+_REQ localhost 81
+__GET /reverse-proxy-request.txt HTTP/1.1
+__Host: reverse-proxy-request.localhost
+__
+_EXPECT . "HTTP/1.1 200 OK"
+_WAIT
+END
+
+SERVER 8081
+_RES
+_EXPECT headers "GET /reverse-proxy-request.txt"
+_WAIT
+__HTTP/1.1 200 OK
+__Content-Type: text/plain
+__Content-Length: AUTO
+__
+_PIPE
+_EXEC cat debian/tests/debian-swirl.txt
+END

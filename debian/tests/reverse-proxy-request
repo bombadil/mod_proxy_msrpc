@@ -1,0 +1,23 @@
+#! /bin/sh
+TESTROOT=debian/tests
+DOCROOT=/var/www/html
+ACCESSLOG=/var/log/apache2/access.log
+ERRORLOG=/var/log/apache2/error.log
+
+set -e
+cp -nv $TESTROOT/reverse-proxy-request.conf /etc/apache2/sites-enabled/reverse-proxy-request.conf
+a2enmod proxy_http
+service apache2 restart || ( systemctl status apache2.service && journalctl -xn --no-pager && exit 1 )
+
+al_offset=0
+if [ -f $ACCESSLOG ]; then al_offset=$(stat --format=%s $ACCESSLOG); fi
+el_offset=0
+if [ -f $ERRORLOG ]; then el_offset=$(stat --format=%s $ERRORLOG); fi
+
+httest debian/tests/reverse-proxy-request.htt
+
+tail -c +$al_offset $ACCESSLOG | tee $ADT_ARTIFACTS/reverse-proxy-request_access.log
+tail -c +$el_offset $ERRORLOG | tee $ADT_ARTIFACTS/reverse-proxy-request_error.log
+
+rm -v /etc/apache2/sites-enabled/reverse-proxy-request.conf
+service apache2 restart

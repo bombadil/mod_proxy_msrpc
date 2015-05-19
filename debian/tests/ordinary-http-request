@@ -1,0 +1,18 @@
+#! /bin/sh
+TESTROOT=debian/tests
+DOCROOT=/var/www/html
+ACCESSLOG=/var/log/apache2/access.log
+ERRORLOG=/var/log/apache2/error.log
+
+al_offset=0
+if [ -f $ACCESSLOG ]; then al_offset=$(stat --format=%s $ACCESSLOG); fi
+el_offset=0
+if [ -f $ERRORLOG ]; then el_offset=$(stat --format=%s $ERRORLOG); fi
+
+set -e
+cp -vn $TESTROOT/debian-swirl.txt $DOCROOT/debian-swirl.txt
+httest $TESTROOT/ordinary-http-request.htt
+rm -v $DOCROOT/debian-swirl.txt
+
+tail -c +$al_offset $ACCESSLOG | tee $ADT_ARTIFACTS/ordinary-http-request_access.log
+tail -c +$el_offset $ERRORLOG | tee $ADT_ARTIFACTS/ordinary-http-request_error.log

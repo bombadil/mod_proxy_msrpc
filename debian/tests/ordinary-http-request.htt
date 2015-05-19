@@ -1,0 +1,8 @@
+CLIENT
+_REQ localhost 80
+__GET /debian-swirl.txt HTTP/1.1
+__Host: localhost
+__
+_EXPECT . "HTTP/1.1 200 OK"
+_WAIT
+END
