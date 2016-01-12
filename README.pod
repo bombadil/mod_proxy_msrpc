@@ -1,0 +1,85 @@
+=head1 NAME
+
+mod_proxy_msrpc - Apache module for Outlook Anywhere support in reverse proxy setups
+
+=head1 SYNOPSIS
+
+Build the module:
+
+    ./configure
+    make
+
+Load the module:
+
+    LoadModule proxy_msrpc_module /path/to/your/mod_proxy_msrpc.so
+
+Enable the module inside a <VirtualHost> configuration container (or globally):
+
+    OutlookAnywherePassthrough On
+
+=head1 DESCRIPTION
+
+This module intends to make Apache httpd work in a reverse proxy setup
+in front of a MS Exchange server offering Outlook Anywhere services.
+Without it, Apache would block any Outlook Anywhere requests for reasons
+documented very well in https://issues.apache.org/bugzilla/show_bug.cgi?id=40029.
+
+Outlook and Exchange use an extended version of DCE RPC called I<MSRPC> to
+communicate with each other.
+When I<Outlook Anywhere> is in use, the MSRPC messages are wrapped into HTTP
+alike requests and responses.
+The mod_proxy_msrpc module detects these MSRPC messages and forwards them to
+the server or client as needed.
+As soon as the initial handshake completed, i.e. Exchange accepted the
+connecting client, the mod_proxy_msrpc module switches into tunnel mode and
+forwards all data from client to server and vice versa.
+
+=head1 CAVEATS
+
+Some older Exchange versions (e.g. Exchange Server 2007) are known to sync
+offline address books and calendar information via other protocols than Outlook
+Anywhere (i.e. MSRPC via HTTP).
+For these Exchange versions functionality of this module is limited to
+enabling receiving and sending mail.
+I.e. Address book and calendar synchronization doesn't work with these Exchange
+versions.
+
+=head1 DIAGNOSTICS
+
+If you encounter any problems, you can set following directive:
+
+    LogLevel info proxy_msrpc:trace2
+
+This will enable detailed debug logging for the proxy_msrpc module, which will
+be written to the usual Apache log destinations (e.g. to file error.log).
+
+=head1 BUGS
+
+Please use the GitHub issue tracker to check for any pending issues or to report any new bugs.
+
+https://github.com/bombadil/mod_proxy_msrpc/issues
+
+=head1 HISTORY
+
+This module was initially written by Micha Lenk as employee of
+Astaro GmbH & Co. KG, Germany, to facilitate Outlook Anywhere
+passthrough for the Sophos UTM's Web Application Firewall.
+It was first released as part of UTM 9.1 in May 2013.
+Sophos generously agreed to contribute the source code to the open source
+community under the terms of the Apache License 2.0.
+
+=head1 AUTHOR
+
+This module was written by Micha Lenk <micha@lenk.info>.
+
+=head1 COPYRIGHT
+
+Copyright 2013 Micha Lenk <micha@lenk.info>, Astaro GmbH & Co. KG - a Sophos company.
+
+=head1 LICENSE
+
+This module is free software; you may redistribute it and/or modify
+it under the terms of the Apache License, Version 2.0.
+You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+
+=cut

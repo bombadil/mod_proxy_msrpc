@@ -36,11 +36,20 @@
 
 int8_t msrpc_sync_wait(const char *key, int timeout)
 {
-    int sync_fd = open(key, O_RDONLY | O_CLOEXEC);
+    int sync_fd;
+#ifdef O_CLOEXEC
+    sync_fd = open(key, O_RDONLY | O_CLOEXEC);
+#else
+    sync_fd = open(key, O_RDONLY);
+#endif
     if (sync_fd < 0) {
         if (errno == ENOENT) {
             // wait until the file is created, or a timeout happens
+#if HAVE_INOTIFY_INIT1
             int inotify_fd = inotify_init1(IN_CLOEXEC);
+#else
+            int inotify_fd = inotify_init();
+#endif
             if (inotify_fd < 0) {
                 #ifdef DEBUG_MSRPC_FIFO
                 printf("inotify_init1() failed: %m\n");

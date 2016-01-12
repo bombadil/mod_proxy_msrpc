@@ -1,0 +1,14 @@
+modproxymsrpc_HEADER=msrpc_pdu_private.h msrpc_pdu_parser.h msrpc_sync.h
+modproxymsrpc_SOURCES=mod_proxy_msrpc.c msrpc_pdu_parser.c msrpc_sync.c
+
+all: .libs/mod_proxy_msrpc.so
+
+.libs/mod_proxy_msrpc.so: $(modproxymsrpc_HEADER) $(modproxymsrpc_SOURCES)
+	@APXS@ @UUIDLIB@ $(LIBS) -c $(modproxymsrpc_SOURCES)
+
+check:
+
+clean:
+	rm -rf .libs *.lo *.slo mod_proxy_msrpc.la Makefile
+
+.PHONY: all check clean
